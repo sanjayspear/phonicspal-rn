@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
@@ -12,6 +12,9 @@ import {
   useScheme,
   type SectionId,
 } from '@phonicspal/ui';
+import { router } from 'expo-router';
+
+import { useAuth } from '@/hooks/use-auth';
 
 const SECTIONS: { section: SectionId; title: string; subtitle: string; icon: string }[] = [
   { section: 'home', title: 'Home', subtitle: "Today's word", icon: '🏠' },
@@ -23,6 +26,7 @@ const SECTIONS: { section: SectionId; title: string; subtitle: string; icon: str
 
 export default function HomeScreen() {
   const scheme = useScheme();
+  const { session, logOut } = useAuth();
   const [active, setActive] = useState<SectionId>('home');
   const [rewardTrigger, setRewardTrigger] = useState(0);
 
@@ -30,7 +34,27 @@ export default function HomeScreen() {
     <View style={[styles.root, { backgroundColor: colors[scheme].background }]}>
       <SafeAreaView style={styles.flex} edges={['top']}>
         <ScrollView contentContainerStyle={styles.content}>
-          <ThemedText variant="title">PhonicsPal</ThemedText>
+          <View style={styles.header}>
+            <View>
+              <ThemedText variant="title">PhonicsPal</ThemedText>
+              {session ? (
+                <ThemedText variant="body" color="labelSecondary">
+                  {session.email} · {session.role}
+                </ThemedText>
+              ) : null}
+            </View>
+            <Pressable
+              onPress={async () => {
+                await logOut();
+                router.replace('/sign-up');
+              }}
+              accessibilityRole="button"
+            >
+              <ThemedText variant="label" color="labelSecondary" style={styles.logOut}>
+                Log out
+              </ThemedText>
+            </Pressable>
+          </View>
           <ThemedText variant="body" color="labelSecondary">
             Design system preview — tap a section to see the reward pop.
           </ThemedText>
@@ -89,5 +113,13 @@ const styles = StyleSheet.create({
   },
   cardIcon: {
     fontSize: 24,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  logOut: {
+    textDecorationLine: 'underline',
   },
 });
