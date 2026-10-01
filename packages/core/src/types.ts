@@ -36,3 +36,21 @@ export interface LearningPath {
   nodes: LearningPathNode[];
   updatedAt: string;
 }
+
+// A roster entry as the teacher dashboard shows it — a read-model, not the
+// full student record.
+export interface StudentSummary {
+  id: string;
+  name: string;
+  topicsCompleted: number;
+  topicsTotal: number;
+  stars: number;
+  lastActiveLabel: string;
+}
+
+export interface ActivityEvent {
+  id: string;
+  studentName: string;
+  summary: string;
+  whenLabel: string;
+}

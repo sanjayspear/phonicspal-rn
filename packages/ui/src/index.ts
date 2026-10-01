@@ -8,3 +8,5 @@ export * from './RewardBurst';
 export * from './Button';
 export * from './TextField';
 export * from './RoleTile';
+export * from './ProgressBar';
+export * from './Avatar';
