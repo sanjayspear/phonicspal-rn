@@ -1,4 +1,4 @@
-import { phonicsTopics } from '@phonicspal/core';
+import { phonicsTopics, stories } from '@phonicspal/core';
 import { RewardBurst, SectionCard, ThemedText, spacing, type SectionId } from '@phonicspal/ui';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -9,7 +9,7 @@ import { DashboardShell } from '@/components/dashboard-shell';
 const SECTIONS: { section: SectionId; title: string; subtitle: string; icon: string }[] = [
   { section: 'home', title: 'Home', subtitle: "Today's word", icon: '🏠' },
   { section: 'phonics', title: 'Phonics', subtitle: `${phonicsTopics.length} topics so far`, icon: '🔤' },
-  { section: 'read', title: 'Read', subtitle: 'Listen and follow along', icon: '📖' },
+  { section: 'read', title: 'Read', subtitle: `${stories.length} stories to listen to`, icon: '📖' },
   { section: 'books', title: 'Books', subtitle: 'Your library', icon: '📚' },
   { section: 'vocab', title: 'Vocab', subtitle: 'Saved words', icon: '⭐' },
 ];
@@ -20,7 +20,7 @@ export function SoloHome() {
   return (
     <DashboardShell gradientAccent="phonics" title="PhonicsPal">
       <ThemedText variant="body" color="labelSecondary">
-        Tap Phonics or Vocab to open real content — Read/Books are still a preview.
+        Tap Phonics, Read or Vocab to open real content — Books is still a preview.
       </ThemedText>
 
       <RewardBurst trigger={rewardTrigger}>
@@ -38,6 +38,7 @@ export function SoloHome() {
             onPress={() => {
               if (item.section === 'phonics') router.push('/phonics');
               else if (item.section === 'vocab') router.push('/vocab');
+              else if (item.section === 'read') router.push('/read');
               else setRewardTrigger((n) => n + 1);
             }}
           />

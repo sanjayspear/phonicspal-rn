@@ -1,4 +1,4 @@
-import { getNodeTitle, mockChildName, mockLearningPath, phonicsTopics } from '@phonicspal/core';
+import { getNodeTitle, mockChildName, mockLearningPath, phonicsTopics, stories } from '@phonicspal/core';
 import {
   Avatar,
   Button,
@@ -21,7 +21,7 @@ const CHILD_STUDENT_ID = mockLearningPath.studentId;
 
 const FREE_PLAY: { section: SectionId; title: string; subtitle: string; icon: string }[] = [
   { section: 'phonics', title: 'Phonics', subtitle: `${phonicsTopics.length} topics so far`, icon: '🔤' },
-  { section: 'read', title: 'Read', subtitle: 'Listen and follow along', icon: '📖' },
+  { section: 'read', title: 'Read', subtitle: `${stories.length} stories to listen to`, icon: '📖' },
   { section: 'books', title: 'Books', subtitle: 'Your library', icon: '📚' },
   { section: 'vocab', title: 'Vocab', subtitle: 'Saved words', icon: '⭐' },
 ];
@@ -103,6 +103,7 @@ export function ParentDashboard() {
             onPress={() => {
               if (item.section === 'phonics') router.push('/phonics');
               else if (item.section === 'vocab') router.push('/vocab');
+              else if (item.section === 'read') router.push('/read');
             }}
           />
         ))}
