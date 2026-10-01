@@ -11,6 +11,7 @@ import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
+import { BooksProvider } from '@/hooks/use-books';
 import { LearningPathsProvider } from '@/hooks/use-learning-paths';
 import { SettingsProvider } from '@/hooks/use-settings';
 import { VocabularyProvider } from '@/hooks/use-vocabulary';
@@ -53,9 +54,11 @@ export default function RootLayout() {
         <AuthProvider>
           <LearningPathsProvider>
             <VocabularyProvider>
-              <AuthGate ready={fontsLoaded}>
-                <Stack screenOptions={{ headerShown: false }} />
-              </AuthGate>
+              <BooksProvider>
+                <AuthGate ready={fontsLoaded}>
+                  <Stack screenOptions={{ headerShown: false }} />
+                </AuthGate>
+              </BooksProvider>
             </VocabularyProvider>
           </LearningPathsProvider>
         </AuthProvider>

@@ -10,7 +10,7 @@ const SECTIONS: { section: SectionId; title: string; subtitle: string; icon: str
   { section: 'home', title: 'Home', subtitle: "Today's word", icon: '🏠' },
   { section: 'phonics', title: 'Phonics', subtitle: `${phonicsTopics.length} topics so far`, icon: '🔤' },
   { section: 'read', title: 'Read', subtitle: `${stories.length} stories to listen to`, icon: '📖' },
-  { section: 'books', title: 'Books', subtitle: 'Your library', icon: '📚' },
+  { section: 'books', title: 'Books', subtitle: 'Upload a .txt to listen to', icon: '📚' },
   { section: 'vocab', title: 'Vocab', subtitle: 'Saved words', icon: '⭐' },
 ];
 
@@ -20,7 +20,7 @@ export function SoloHome() {
   return (
     <DashboardShell gradientAccent="phonics" title="PhonicsPal">
       <ThemedText variant="body" color="labelSecondary">
-        Tap Phonics, Read or Vocab to open real content — Books is still a preview.
+        Tap Phonics, Read, Books or Vocab to explore!
       </ThemedText>
 
       <RewardBurst trigger={rewardTrigger}>
@@ -39,6 +39,7 @@ export function SoloHome() {
               if (item.section === 'phonics') router.push('/phonics');
               else if (item.section === 'vocab') router.push('/vocab');
               else if (item.section === 'read') router.push('/read');
+              else if (item.section === 'books') router.push('/books');
               else setRewardTrigger((n) => n + 1);
             }}
           />
