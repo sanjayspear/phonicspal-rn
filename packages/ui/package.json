@@ -6,7 +6,9 @@
   "types": "src/index.ts",
   "peerDependencies": {
     "react": "*",
-    "react-native": "*"
+    "react-native": "*",
+    "react-native-safe-area-context": "*",
+    "react-native-reanimated": "*"
   },
   "devDependencies": {
     "typescript": "~6.0.3"

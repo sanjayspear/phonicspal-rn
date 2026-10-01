@@ -1,98 +1,93 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import {
+  BottomNav,
+  RewardBurst,
+  SectionCard,
+  ThemedText,
+  colors,
+  spacing,
+  useScheme,
+  type SectionId,
+} from '@phonicspal/ui';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+const SECTIONS: { section: SectionId; title: string; subtitle: string; icon: string }[] = [
+  { section: 'home', title: 'Home', subtitle: "Today's word", icon: '🏠' },
+  { section: 'phonics', title: 'Phonics', subtitle: '62 topics to explore', icon: '🔤' },
+  { section: 'read', title: 'Read', subtitle: 'Listen and follow along', icon: '📖' },
+  { section: 'books', title: 'Books', subtitle: 'Your library', icon: '📚' },
+  { section: 'vocab', title: 'Vocab', subtitle: 'Saved words', icon: '⭐' },
+];
 
 export default function HomeScreen() {
+  const scheme = useScheme();
+  const [active, setActive] = useState<SectionId>('home');
+  const [rewardTrigger, setRewardTrigger] = useState(0);
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
+    <View style={[styles.root, { backgroundColor: colors[scheme].background }]}>
+      <SafeAreaView style={styles.flex} edges={['top']}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <ThemedText variant="title">PhonicsPal</ThemedText>
+          <ThemedText variant="body" color="labelSecondary">
+            Design system preview — tap a section to see the reward pop.
           </ThemedText>
-        </ThemedView>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+          <RewardBurst trigger={rewardTrigger}>
+            <Text style={styles.rewardStar}>⭐</Text>
+          </RewardBurst>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+          <View style={styles.cards}>
+            {SECTIONS.map((item) => (
+              <SectionCard
+                key={item.section}
+                section={item.section}
+                title={item.title}
+                subtitle={item.subtitle}
+                icon={<Text style={styles.cardIcon}>{item.icon}</Text>}
+                onPress={() => {
+                  setActive(item.section);
+                  setRewardTrigger((n) => n + 1);
+                }}
+              />
+            ))}
+          </View>
+        </ScrollView>
 
-        {Platform.OS === 'web' && <WebBadge />}
+        <BottomNav
+          items={SECTIONS.map(({ section, title, icon }) => ({
+            section,
+            label: title,
+            icon: <Text>{icon}</Text>,
+          }))}
+          active={active}
+          onChange={setActive}
+        />
       </SafeAreaView>
-    </ThemedView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+  root: { flex: 1 },
+  flex: { flex: 1 },
+  content: {
+    padding: spacing.lg,
+    gap: spacing.md,
+    maxWidth: 800,
+    alignSelf: 'center',
+    width: '100%',
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
+  rewardStar: {
+    fontSize: 40,
     textAlign: 'center',
   },
-  code: {
-    textTransform: 'uppercase',
+  cards: {
+    gap: spacing.md,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  cardIcon: {
+    fontSize: 24,
   },
 });
