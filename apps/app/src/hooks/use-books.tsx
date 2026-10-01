@@ -1,19 +1,25 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
-// Local-only library: v1 stores PDF/TXT/EPUB in IndexedDB with a 35MB cap
-// and extracts text via PDF.js/JSZip (CDN scripts, web-only). Neither has a
-// clean RN equivalent, so this is scoped down hard: .txt files only, text
-// stored directly in AsyncStorage (not a separate file store), capped well
-// below 35MB to stay within AsyncStorage's practical limits. PDF/EPUB
-// support is future work, not attempted here.
+// Local-only library: v1 stores the original PDF/TXT/EPUB file in
+// IndexedDB (35MB cap) and extracts text via PDF.js/JSZip loaded from a
+// CDN. Here PDF.js/JSZip are real npm deps instead of CDN scripts (see
+// src/lib/book-text.ts), but only the *extracted text* is kept — not the
+// original file — since AsyncStorage (not IndexedDB) is the storage here.
+// MAX_UPLOAD_SIZE gates the original file (extraction can be slow/memory-
+// heavy for a huge PDF); MAX_TEXT_LENGTH gates what actually gets stored.
+export const MAX_UPLOAD_SIZE = 15 * 1024 * 1024; // 15MB original file
+export const MAX_TEXT_LENGTH = 1_000_000; // ~1MB of extracted text
+
 const STORAGE_KEY = 'phonicspal.books';
-export const MAX_BOOK_SIZE = 2 * 1024 * 1024; // 2MB — see note above
+
+export type BookExt = 'txt' | 'pdf' | 'epub';
 
 export interface Book {
   id: string;
   name: string;
-  size: number;
+  ext: BookExt;
+  size: number; // original file size, for display
   text: string;
 }
 

@@ -22,7 +22,7 @@ const CHILD_STUDENT_ID = mockLearningPath.studentId;
 const FREE_PLAY: { section: SectionId; title: string; subtitle: string; icon: string }[] = [
   { section: 'phonics', title: 'Phonics', subtitle: `${phonicsTopics.length} topics so far`, icon: '🔤' },
   { section: 'read', title: 'Read', subtitle: `${stories.length} stories to listen to`, icon: '📖' },
-  { section: 'books', title: 'Books', subtitle: 'Upload a .txt to listen to', icon: '📚' },
+  { section: 'books', title: 'Books', subtitle: 'Upload a PDF, TXT or EPUB', icon: '📚' },
   { section: 'vocab', title: 'Vocab', subtitle: 'Saved words', icon: '⭐' },
 ];
 

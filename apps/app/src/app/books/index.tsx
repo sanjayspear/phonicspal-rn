@@ -16,7 +16,16 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/components/screen-header';
-import { MAX_BOOK_SIZE, useBooks } from '@/hooks/use-books';
+import { MAX_TEXT_LENGTH, MAX_UPLOAD_SIZE, useBooks, type BookExt } from '@/hooks/use-books';
+import { extractEpubText } from '@/lib/epub-text';
+import { extractPdfText } from '@/lib/pdf-text';
+
+const ACCEPTED_TYPES = ['text/plain', 'application/pdf', 'application/epub+zip'];
+
+function extOf(name: string): BookExt | null {
+  const ext = name.split('.').pop()?.toLowerCase();
+  return ext === 'txt' || ext === 'pdf' || ext === 'epub' ? ext : null;
+}
 
 export default function BooksListScreen() {
   const scheme = useScheme();
@@ -24,30 +33,53 @@ export default function BooksListScreen() {
   const [status, setStatus] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
+  async function readBytes(asset: DocumentPicker.DocumentPickerAsset): Promise<ArrayBuffer> {
+    return asset.file ? await asset.file.arrayBuffer() : await (await fetch(asset.uri)).arrayBuffer();
+  }
+
   async function upload() {
     setStatus(null);
-    const result = await DocumentPicker.getDocumentAsync({ type: ['text/plain'] });
+    const result = await DocumentPicker.getDocumentAsync({ type: ACCEPTED_TYPES });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
 
-    if (!asset.name.toLowerCase().endsWith('.txt')) {
-      setStatus('Please choose a .txt file — PDF and EPUB aren’t supported yet.');
+    const ext = extOf(asset.name);
+    if (!ext) {
+      setStatus('Please choose a PDF, TXT or EPUB file.');
       return;
     }
-    if ((asset.size ?? 0) > MAX_BOOK_SIZE) {
-      setStatus('That file is bigger than 2MB. Please choose a smaller one.');
+    if ((asset.size ?? 0) > MAX_UPLOAD_SIZE) {
+      setStatus('That file is bigger than 15MB. Please choose a smaller one.');
       return;
     }
 
     setUploading(true);
     try {
-      const text = asset.file ? await asset.file.text() : await (await fetch(asset.uri)).text();
-      const trimmed = text.replace(/[ \t]+/g, ' ').trim();
+      let text: string;
+      if (ext === 'txt') {
+        text = asset.file ? await asset.file.text() : await (await fetch(asset.uri)).text();
+      } else if (ext === 'pdf') {
+        setStatus('Reading your book…');
+        text = await extractPdfText(await readBytes(asset), (page, total) =>
+          setStatus(`Reading page ${page} of ${total}…`)
+        );
+      } else {
+        setStatus('Reading your book…');
+        text = await extractEpubText(await readBytes(asset));
+      }
+
+      let trimmed = text.replace(/[ \t]+/g, ' ').trim();
       if (trimmed.length < 20) throw new Error('empty');
-      addBook({ name: asset.name.replace(/\.txt$/i, ''), size: asset.size ?? trimmed.length, text: trimmed });
-      setStatus('Done! Your book is ready.');
+      if (trimmed.length > MAX_TEXT_LENGTH) {
+        trimmed = trimmed.slice(0, MAX_TEXT_LENGTH);
+        setStatus('Done! The book was long, so only the first part was saved.');
+      } else {
+        setStatus('Done! Your book is ready.');
+      }
+
+      addBook({ name: asset.name.replace(/\.[^.]+$/, ''), ext, size: asset.size ?? trimmed.length, text: trimmed });
     } catch {
-      setStatus('Sorry, that file didn’t have readable text in it.');
+      setStatus('Sorry, I could not find readable text in that file. Scanned or protected files may not work.');
     } finally {
       setUploading(false);
     }
@@ -63,11 +95,10 @@ export default function BooksListScreen() {
         <ScrollView contentContainerStyle={styles.content}>
           <ScreenHeader title="Books" />
           <ThemedText variant="body" color="labelSecondary">
-            Upload a .txt file (up to 2MB) to add it to your library. PDF and EPUB support isn
-            {'’'}t built yet.
+            Upload a PDF, TXT or EPUB file (up to 15MB) to add it to your library.
           </ThemedText>
 
-          <Button title="＋ Upload a .txt file" accent="books" onPress={upload} loading={uploading} />
+          <Button title="＋ Upload a book" accent="books" onPress={upload} loading={uploading} />
           {status ? (
             <ThemedText variant="body" color="labelSecondary">
               {status}
@@ -89,7 +120,7 @@ export default function BooksListScreen() {
                   <View style={styles.cardText}>
                     <ThemedText variant="subtitle">{book.name}</ThemedText>
                     <ThemedText variant="label" color="labelSecondary">
-                      TXT · {(book.size / 1024).toFixed(0)} KB
+                      {book.ext.toUpperCase()} · {(book.size / 1048576).toFixed(1)} MB
                     </ThemedText>
                   </View>
                   <Pressable onPress={() => router.push(`/books/${book.id}`)} hitSlop={6}>
