@@ -1,8 +1,8 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from './ThemedText';
-import { colors, minTouchTarget, sectionColors, spacing, type SectionId } from './tokens';
+import { colors, minTouchTarget, radii, sectionColors, spacing, withAlpha, type SectionId } from './tokens';
 import { useScheme } from './useScheme';
 
 export interface BottomNavItem {
@@ -19,7 +19,9 @@ export interface BottomNavProps {
 
 // Docked to the safe area instead of `position: fixed`/`absolute` with a
 // hardcoded offset — avoids drifting over notches/gesture bars and
-// competing with the keyboard. See §2.1 finding 2 / §2.2 fix.
+// competing with the keyboard. See §2.1 finding 2 / §2.2 fix. Rounded top
+// corners + a lifted shadow read as a floating bar rather than a plain
+// toolbar strip.
 export function BottomNav({ items, active, onChange }: BottomNavProps) {
   const scheme = useScheme();
   const insets = useSafeAreaInsets();
@@ -29,10 +31,18 @@ export function BottomNav({ items, active, onChange }: BottomNavProps) {
       style={[
         styles.bar,
         {
-          backgroundColor: colors[scheme].surface,
-          borderTopColor: colors[scheme].border,
+          backgroundColor: colors[scheme].background,
           paddingBottom: Math.max(insets.bottom, spacing.sm),
         },
+        Platform.select({
+          web: { boxShadow: '0 -8px 24px -8px rgba(0,0,0,0.15)' },
+          default: {
+            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: 0.12,
+            shadowRadius: 12,
+            elevation: 8,
+          },
+        }),
       ]}
     >
       {items.map((item) => {
@@ -46,13 +56,20 @@ export function BottomNav({ items, active, onChange }: BottomNavProps) {
             accessibilityState={{ selected: isActive }}
             style={styles.item}
           >
-            <View style={styles.icon}>{item.icon}</View>
-            <ThemedText
-              variant="label"
-              style={{ color: isActive ? accent : colors[scheme].labelSecondary }}
+            <View
+              style={[
+                styles.pill,
+                isActive && { backgroundColor: withAlpha(accent, 0.14) },
+              ]}
             >
-              {item.label}
-            </ThemedText>
+              <View style={styles.icon}>{item.icon}</View>
+              <ThemedText
+                variant="label"
+                style={{ color: isActive ? accent : colors[scheme].labelSecondary }}
+              >
+                {item.label}
+              </ThemedText>
+            </View>
           </Pressable>
         );
       })}
@@ -63,19 +80,29 @@ export function BottomNav({ items, active, onChange }: BottomNavProps) {
 const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
-    borderTopWidth: 1,
+    borderTopLeftRadius: radii.xl,
+    borderTopRightRadius: radii.xl,
     paddingTop: spacing.sm,
+    paddingHorizontal: spacing.xs,
   },
   item: {
     flex: 1,
     alignItems: 'center',
-    gap: spacing.xs,
-    minHeight: minTouchTarget,
+    justifyContent: 'center',
+  },
+  pill: {
+    alignItems: 'center',
+    gap: spacing.xs / 2,
+    minHeight: minTouchTarget - spacing.sm,
+    minWidth: 64,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radii.lg,
     justifyContent: 'center',
   },
   icon: {
-    width: 24,
-    height: 24,
+    width: 20,
+    height: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },

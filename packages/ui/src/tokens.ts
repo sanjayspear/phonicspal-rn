@@ -1,7 +1,9 @@
 // Design tokens — see PHONICSPAL_RN_DESIGN_DOC.md §2.2.
 // Section accents are picked from a 700/800-weight palette so they clear
-// WCAG AA (4.5:1) as text/icon color on a white background — verify with
-// a contrast checker before changing any of these.
+// WCAG AA (4.5:1) both as text-on-white AND as white-text-on-fill (the
+// ratio is symmetric), which is why the same values are reused for solid
+// button/badge fills, not just text/icons — verify with a contrast
+// checker before changing any of these.
 
 export type SectionId = 'home' | 'phonics' | 'read' | 'books' | 'vocab';
 
@@ -49,9 +51,35 @@ export const radii = {
   sm: 8,
   md: 16,
   lg: 24,
+  xl: 28,
   pill: 999,
 };
 
 // Minimum comfortable touch target for a 4-5 year old (well above the
 // usual 44px adult minimum).
 export const minTouchTarget = 56;
+
+// Playful & bright direction: Baloo 2 (rounded display font) for anything
+// a child reads as a heading/label, keeping a plain system font for dense
+// body copy. Family name strings must match the keys loaded via
+// @expo-google-fonts/baloo-2 in the app's root layout.
+export const fonts = {
+  heading: 'Baloo2_800ExtraBold',
+  subheading: 'Baloo2_700Bold',
+  label: 'Baloo2_600SemiBold',
+};
+
+// Darken a #RRGGBB color by `amount` (0-1) — used for the 3D "press" lip
+// under buttons/cards (a flat bottom shadow layer, not a blurred shadow).
+export function darken(hex: string, amount: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.round(((n >> 16) & 0xff) * (1 - amount));
+  const g = Math.round(((n >> 8) & 0xff) * (1 - amount));
+  const b = Math.round((n & 0xff) * (1 - amount));
+  return `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+}
+
+// Append an alpha channel (0-1) to a #RRGGBB color for a light tint wash.
+export function withAlpha(hex: string, alpha: number): string {
+  return `${hex}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`;
+}

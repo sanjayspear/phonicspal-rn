@@ -1,5 +1,16 @@
 import type { Role } from '@phonicspal/core';
-import { Button, RoleTile, ThemedText, TextField, colors, spacing, useScheme } from '@phonicspal/ui';
+import {
+  Button,
+  RoleTile,
+  ThemedText,
+  TextField,
+  colors,
+  sectionColors,
+  spacing,
+  useScheme,
+  withAlpha,
+} from '@phonicspal/ui';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -41,7 +52,11 @@ export default function SignUpScreen() {
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: colors[scheme].background }]}>
+    <View style={styles.root}>
+      <LinearGradient
+        colors={[withAlpha(sectionColors.home, 0.16), colors[scheme].background]}
+        style={StyleSheet.absoluteFill}
+      />
       <SafeAreaView style={styles.flex}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <ThemedText variant="title">Create your account</ThemedText>
@@ -122,7 +137,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   roleIcon: {
-    fontSize: 24,
+    fontSize: 26,
   },
   error: {
     color: '#B91C1C',

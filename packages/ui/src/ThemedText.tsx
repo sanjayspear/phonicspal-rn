@@ -1,6 +1,6 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
-import { colors } from './tokens';
+import { colors, fonts } from './tokens';
 import { useScaled } from './useBreakpoint';
 import { useScheme } from './useScheme';
 
@@ -24,7 +24,7 @@ export function ThemedText({ style, variant = 'body', color = 'label', ...rest }
 function sizeFor(variant: NonNullable<ThemedTextProps['variant']>) {
   switch (variant) {
     case 'title':
-      return { phone: 28, tablet: 34, desktop: 40 };
+      return { phone: 30, tablet: 36, desktop: 42 };
     case 'subtitle':
       return { phone: 20, tablet: 24 };
     case 'label':
@@ -35,9 +35,11 @@ function sizeFor(variant: NonNullable<ThemedTextProps['variant']>) {
   }
 }
 
+// Baloo 2 (a rounded display font) for anything a child reads as a
+// heading/label; body copy stays on the system font for density/legibility.
 const styles = StyleSheet.create({
-  title: { fontWeight: '700' },
-  subtitle: { fontWeight: '600' },
+  title: { fontFamily: fonts.heading },
+  subtitle: { fontFamily: fonts.subheading },
   body: { fontWeight: '400' },
-  label: { fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.4 },
+  label: { fontFamily: fonts.label, textTransform: 'uppercase', letterSpacing: 0.6 },
 });

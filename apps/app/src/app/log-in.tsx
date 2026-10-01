@@ -1,4 +1,14 @@
-import { Button, ThemedText, TextField, colors, spacing, useScheme } from '@phonicspal/ui';
+import {
+  Button,
+  ThemedText,
+  TextField,
+  colors,
+  sectionColors,
+  spacing,
+  useScheme,
+  withAlpha,
+} from '@phonicspal/ui';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -29,7 +39,11 @@ export default function LogInScreen() {
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: colors[scheme].background }]}>
+    <View style={styles.root}>
+      <LinearGradient
+        colors={[withAlpha(sectionColors.vocab, 0.16), colors[scheme].background]}
+        style={StyleSheet.absoluteFill}
+      />
       <SafeAreaView style={styles.flex}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <ThemedText variant="title">Welcome back</ThemedText>

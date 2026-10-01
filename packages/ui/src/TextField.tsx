@@ -56,8 +56,8 @@ const styles = StyleSheet.create({
   },
   input: {
     minHeight: minTouchTarget,
-    borderWidth: 2,
-    borderRadius: radii.md,
+    borderWidth: 2.5,
+    borderRadius: radii.lg,
     paddingHorizontal: spacing.md,
     fontSize: 17,
   },

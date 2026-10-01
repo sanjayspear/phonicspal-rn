@@ -1,7 +1,7 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from './ThemedText';
-import { colors, minTouchTarget, radii, sectionColors, spacing, type SectionId } from './tokens';
+import { colors, minTouchTarget, radii, sectionColors, spacing, withAlpha, type SectionId } from './tokens';
 import { useScheme } from './useScheme';
 
 export interface SectionCardProps {
@@ -12,9 +12,9 @@ export interface SectionCardProps {
   onPress?: () => void;
 }
 
-// Gives each top-level section a consistent accent (color + icon slot) used
-// in its card, so color becomes a wayfinding cue — see §2.1 finding 4 /
-// §2.2 fix in the design doc.
+// A colorful icon "badge" + a soft accent-tinted shadow give each section
+// a distinct, tappable identity — see §2.1 finding 4 / §2.2 fix in the
+// design doc, taken further for the playful/bright visual pass.
 export function SectionCard({ section, title, subtitle, icon, onPress }: SectionCardProps) {
   const scheme = useScheme();
   const accent = sectionColors[section];
@@ -26,14 +26,13 @@ export function SectionCard({ section, title, subtitle, icon, onPress }: Section
       style={({ pressed }) => [
         styles.card,
         {
-          backgroundColor: colors[scheme].surface,
-          borderColor: colors[scheme].border,
-          opacity: pressed ? 0.85 : 1,
+          backgroundColor: colors[scheme].background,
+          shadowColor: accent,
+          transform: [{ scale: pressed ? 0.98 : 1 }],
         },
       ]}
     >
-      <View style={[styles.accentBar, { backgroundColor: accent }]} />
-      <View style={styles.iconSlot}>{icon}</View>
+      <View style={[styles.badge, { backgroundColor: accent }]}>{icon}</View>
       <View style={styles.text}>
         <ThemedText variant="subtitle" style={{ color: accent }}>
           {title}
@@ -44,6 +43,9 @@ export function SectionCard({ section, title, subtitle, icon, onPress }: Section
           </ThemedText>
         ) : null}
       </View>
+      <View style={[styles.chevron, { backgroundColor: withAlpha(accent, 0.1) }]}>
+        <ThemedText style={{ color: accent }}>→</ThemedText>
+      </View>
     </Pressable>
   );
 }
@@ -52,25 +54,36 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    minHeight: minTouchTarget + spacing.md,
-    overflow: 'hidden',
-    paddingRight: spacing.lg,
+    borderRadius: radii.xl,
+    minHeight: minTouchTarget + spacing.lg,
+    paddingHorizontal: spacing.md,
+    gap: spacing.md,
+    ...Platform.select({
+      web: { boxShadow: '0 10px 24px -8px rgba(0,0,0,0.18)' },
+      default: {
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.18,
+        shadowRadius: 16,
+        elevation: 4,
+      },
+    }),
   },
-  accentBar: {
-    width: 8,
-    alignSelf: 'stretch',
-  },
-  iconSlot: {
+  badge: {
     width: minTouchTarget,
     height: minTouchTarget,
+    borderRadius: radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   text: {
     flex: 1,
     gap: spacing.xs,
-    paddingVertical: spacing.md,
+  },
+  chevron: {
+    width: 32,
+    height: 32,
+    borderRadius: radii.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

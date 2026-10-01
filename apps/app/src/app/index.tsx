@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 
 import {
   BottomNav,
@@ -8,11 +10,12 @@ import {
   SectionCard,
   ThemedText,
   colors,
+  sectionColors,
   spacing,
   useScheme,
+  withAlpha,
   type SectionId,
 } from '@phonicspal/ui';
-import { router } from 'expo-router';
 
 import { useAuth } from '@/hooks/use-auth';
 
@@ -31,7 +34,11 @@ export default function HomeScreen() {
   const [rewardTrigger, setRewardTrigger] = useState(0);
 
   return (
-    <View style={[styles.root, { backgroundColor: colors[scheme].background }]}>
+    <View style={styles.root}>
+      <LinearGradient
+        colors={[withAlpha(sectionColors.phonics, 0.16), colors[scheme].background]}
+        style={StyleSheet.absoluteFill}
+      />
       <SafeAreaView style={styles.flex} edges={['top']}>
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.header}>
@@ -56,7 +63,7 @@ export default function HomeScreen() {
             </Pressable>
           </View>
           <ThemedText variant="body" color="labelSecondary">
-            Design system preview — tap a section to see the reward pop.
+            Tap a section to see the reward pop!
           </ThemedText>
 
           <RewardBurst trigger={rewardTrigger}>
@@ -105,14 +112,14 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   rewardStar: {
-    fontSize: 40,
+    fontSize: 56,
     textAlign: 'center',
   },
   cards: {
     gap: spacing.md,
   },
   cardIcon: {
-    fontSize: 24,
+    fontSize: 28,
   },
   header: {
     flexDirection: 'row',
