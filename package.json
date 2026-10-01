@@ -1,0 +1,14 @@
+{
+  "name": "phonicspal-rn",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "app": "npm run start --workspace apps/app",
+    "app:web": "npm run web --workspace apps/app",
+    "app:ios": "npm run ios --workspace apps/app",
+    "app:android": "npm run android --workspace apps/app"
+  }
+}

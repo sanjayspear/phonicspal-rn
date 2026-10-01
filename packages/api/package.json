@@ -1,0 +1,13 @@
+{
+  "name": "@phonicspal/api",
+  "version": "0.0.1",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@phonicspal/core": "*"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3"
+  }
+}
