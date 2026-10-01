@@ -7,6 +7,8 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
+import { useAccessibilityPrefs } from './accessibility';
+
 export interface RewardBurstProps {
   // Flip this to a new value (e.g. a counter) each time a reward should pop.
   trigger: number;
@@ -19,9 +21,10 @@ export interface RewardBurstProps {
 export function RewardBurst({ trigger, children }: RewardBurstProps) {
   const scale = useSharedValue(1);
   const rotate = useSharedValue(0);
+  const { reduceMotion } = useAccessibilityPrefs();
 
   useEffect(() => {
-    if (trigger === 0) return;
+    if (trigger === 0 || reduceMotion) return;
     scale.value = withSequence(
       withSpring(1.5, { damping: 4, stiffness: 240 }),
       withSpring(1, { damping: 6, stiffness: 200 })
@@ -31,7 +34,7 @@ export function RewardBurst({ trigger, children }: RewardBurstProps) {
       withSpring(12, { damping: 3, stiffness: 240 }),
       withSpring(0, { damping: 5, stiffness: 200 })
     );
-  }, [trigger, scale, rotate]);
+  }, [trigger, reduceMotion, scale, rotate]);
 
   const style = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }, { rotateZ: `${rotate.value}deg` }],

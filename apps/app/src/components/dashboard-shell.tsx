@@ -56,17 +56,27 @@ export function DashboardShell({ gradientAccent, title, children }: DashboardShe
                 </ThemedText>
               ) : null}
             </View>
-            <Pressable
-              onPress={async () => {
-                await logOut();
-                router.replace('/sign-up');
-              }}
-              accessibilityRole="button"
-            >
-              <ThemedText variant="label" color="labelSecondary" style={styles.logOut}>
-                Log out
-              </ThemedText>
-            </Pressable>
+            <View style={styles.headerActions}>
+              <Pressable
+                onPress={() => router.push('/settings')}
+                accessibilityRole="button"
+                accessibilityLabel="Settings"
+                hitSlop={8}
+              >
+                <Text style={styles.gear}>⚙️</Text>
+              </Pressable>
+              <Pressable
+                onPress={async () => {
+                  await logOut();
+                  router.replace('/sign-up');
+                }}
+                accessibilityRole="button"
+              >
+                <ThemedText variant="label" color="labelSecondary" style={styles.logOut}>
+                  Log out
+                </ThemedText>
+              </Pressable>
+            </View>
           </View>
 
           {children}
@@ -100,6 +110,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  gear: {
+    fontSize: 20,
   },
   logOut: {
     textDecorationLine: 'underline',

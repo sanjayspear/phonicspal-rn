@@ -1,5 +1,6 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
+import { useAccessibilityPrefs } from './accessibility';
 import { colors, fonts } from './tokens';
 import { useScaled } from './useBreakpoint';
 import { useScheme } from './useScheme';
@@ -12,12 +13,14 @@ export type ThemedTextProps = TextProps & {
 export function ThemedText({ style, variant = 'body', color = 'label', ...rest }: ThemedTextProps) {
   const scheme = useScheme();
   const fontSize = useScaled(sizeFor(variant));
+  const { highContrast } = useAccessibilityPrefs();
+  // High contrast: promote secondary (gray) text to the full-contrast label
+  // color instead of a separate "high contrast palette" — labelSecondary is
+  // the one place low-contrast-by-design text lives.
+  const resolvedColor = highContrast ? colors[scheme].label : colors[scheme][color];
 
   return (
-    <Text
-      style={[{ color: colors[scheme][color], fontSize }, styles[variant], style]}
-      {...rest}
-    />
+    <Text style={[{ color: resolvedColor, fontSize }, styles[variant], style]} {...rest} />
   );
 }
 
