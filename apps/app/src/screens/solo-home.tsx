@@ -1,13 +1,14 @@
+import { phonicsTopics } from '@phonicspal/core';
+import { RewardBurst, SectionCard, ThemedText, spacing, type SectionId } from '@phonicspal/ui';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-
-import { RewardBurst, SectionCard, ThemedText, spacing, type SectionId } from '@phonicspal/ui';
 
 import { DashboardShell } from '@/components/dashboard-shell';
 
 const SECTIONS: { section: SectionId; title: string; subtitle: string; icon: string }[] = [
   { section: 'home', title: 'Home', subtitle: "Today's word", icon: '🏠' },
-  { section: 'phonics', title: 'Phonics', subtitle: '62 topics to explore', icon: '🔤' },
+  { section: 'phonics', title: 'Phonics', subtitle: `${phonicsTopics.length} topics so far`, icon: '🔤' },
   { section: 'read', title: 'Read', subtitle: 'Listen and follow along', icon: '📖' },
   { section: 'books', title: 'Books', subtitle: 'Your library', icon: '📚' },
   { section: 'vocab', title: 'Vocab', subtitle: 'Saved words', icon: '⭐' },
@@ -19,7 +20,7 @@ export function SoloHome() {
   return (
     <DashboardShell gradientAccent="phonics" title="PhonicsPal">
       <ThemedText variant="body" color="labelSecondary">
-        Tap a section to see the reward pop!
+        Tap Phonics to open a real topic — the rest are still a preview.
       </ThemedText>
 
       <RewardBurst trigger={rewardTrigger}>
@@ -34,7 +35,10 @@ export function SoloHome() {
             title={item.title}
             subtitle={item.subtitle}
             icon={<Text style={styles.cardIcon}>{item.icon}</Text>}
-            onPress={() => setRewardTrigger((n) => n + 1)}
+            onPress={() => {
+              if (item.section === 'phonics') router.push('/phonics');
+              else setRewardTrigger((n) => n + 1);
+            }}
           />
         ))}
       </View>

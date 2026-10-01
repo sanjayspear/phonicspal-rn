@@ -1,4 +1,4 @@
-import { mockChildName, mockLearningPath, mockNodeTitles } from '@phonicspal/core';
+import { mockChildName, mockLearningPath, mockNodeTitles, phonicsTopics } from '@phonicspal/core';
 import {
   Avatar,
   Button,
@@ -11,12 +11,13 @@ import {
   useScheme,
   type SectionId,
 } from '@phonicspal/ui';
+import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { DashboardShell } from '@/components/dashboard-shell';
 
 const FREE_PLAY: { section: SectionId; title: string; subtitle: string; icon: string }[] = [
-  { section: 'phonics', title: 'Phonics', subtitle: '62 topics to explore', icon: '🔤' },
+  { section: 'phonics', title: 'Phonics', subtitle: `${phonicsTopics.length} topics so far`, icon: '🔤' },
   { section: 'read', title: 'Read', subtitle: 'Listen and follow along', icon: '📖' },
   { section: 'books', title: 'Books', subtitle: 'Your library', icon: '📚' },
   { section: 'vocab', title: 'Vocab', subtitle: 'Saved words', icon: '⭐' },
@@ -90,7 +91,9 @@ export function ParentDashboard() {
             title={item.title}
             subtitle={item.subtitle}
             icon={<Text style={styles.cardIcon}>{item.icon}</Text>}
-            onPress={() => {}}
+            onPress={() => {
+              if (item.section === 'phonics') router.push('/phonics');
+            }}
           />
         ))}
       </View>
