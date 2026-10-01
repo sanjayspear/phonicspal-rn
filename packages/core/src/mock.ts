@@ -5,7 +5,8 @@
 // the shapes here (StudentSummary, LearningPath) are the real domain types,
 // not a throwaway stub shape.
 
-import type { ActivityEvent, LearningPath, StudentSummary } from './types';
+import type { ActivityEvent, LearningPath, LearningPathNode, StudentSummary } from './types';
+import { getPhonicsTopic } from './topics';
 
 export const mockRoster: StudentSummary[] = [
   { id: 's1', name: 'Mia', topicsCompleted: 14, topicsTotal: 62, stars: 23, lastActiveLabel: 'Today' },
@@ -37,8 +38,9 @@ export const mockLearningPath: LearningPath = {
   ],
 };
 
-// Display titles for the refIds above — stands in for a real topics.js/
-// assignment lookup once content migration (docs/DESIGN.md §5.3) happens.
+// Display titles for the seed path's refIds above, which predate the real
+// ported topics (docs/DESIGN.md §5.3) — stands in for the content that
+// would exist once all 62 topics are migrated.
 export const mockNodeTitles: Record<string, string> = {
   'blend-cvc': 'Blending CVC Words',
   'sound-boxes-sh-ch': 'Sound Boxes: sh, ch',
@@ -46,3 +48,13 @@ export const mockNodeTitles: Record<string, string> = {
   'read-3-pages-aloud': 'Read 3 pages aloud',
   'word-families-at-an': 'Word Families: -at, -an',
 };
+
+// A node's display title: a real ported topic, one of the legacy seed
+// titles above (the seed path's assignment node uses a slug refId that
+// needs this lookup same as its topic nodes do), or — for a free-text
+// assignment node created via the builder — the text itself, since there
+// nothing else to look up.
+export function getNodeTitle(node: Pick<LearningPathNode, 'refId' | 'type'>): string {
+  if (node.type === 'topic') return getPhonicsTopic(node.refId)?.name ?? mockNodeTitles[node.refId] ?? node.refId;
+  return mockNodeTitles[node.refId] ?? node.refId;
+}

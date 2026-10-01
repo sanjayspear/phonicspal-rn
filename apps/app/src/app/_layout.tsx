@@ -11,6 +11,7 @@ import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
+import { LearningPathsProvider } from '@/hooks/use-learning-paths';
 import { SettingsProvider } from '@/hooks/use-settings';
 
 SplashScreen.preventAutoHideAsync();
@@ -49,9 +50,11 @@ export default function RootLayout() {
       <AnimatedSplashOverlay />
       <SettingsProvider>
         <AuthProvider>
-          <AuthGate ready={fontsLoaded}>
-            <Stack screenOptions={{ headerShown: false }} />
-          </AuthGate>
+          <LearningPathsProvider>
+            <AuthGate ready={fontsLoaded}>
+              <Stack screenOptions={{ headerShown: false }} />
+            </AuthGate>
+          </LearningPathsProvider>
         </AuthProvider>
       </SettingsProvider>
     </ThemeProvider>

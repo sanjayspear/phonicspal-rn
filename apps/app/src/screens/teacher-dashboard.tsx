@@ -1,6 +1,7 @@
 import { mockActivity, mockRoster } from '@phonicspal/core';
 import { Avatar, ProgressBar, ThemedText, colors, radii, spacing, useScheme } from '@phonicspal/ui';
-import { StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { DashboardShell } from '@/components/dashboard-shell';
 
@@ -10,7 +11,7 @@ export function TeacherDashboard() {
       <View style={styles.sectionHeader}>
         <ThemedText variant="subtitle">Your Class</ThemedText>
         <ThemedText variant="body" color="labelSecondary">
-          Code: XK3F9 · {mockRoster.length} students
+          Code: XK3F9 · {mockRoster.length} students · tap a student to build their path
         </ThemedText>
       </View>
 
@@ -22,6 +23,7 @@ export function TeacherDashboard() {
             progress={student.topicsCompleted / student.topicsTotal}
             stars={student.stars}
             lastActiveLabel={student.lastActiveLabel}
+            onPress={() => router.push(`/build-path/${student.id}`)}
           />
         ))}
       </View>
@@ -54,15 +56,21 @@ function RosterRow({
   progress,
   stars,
   lastActiveLabel,
+  onPress,
 }: {
   name: string;
   progress: number;
   stars: number;
   lastActiveLabel: string;
+  onPress: () => void;
 }) {
   const scheme = useScheme();
   return (
-    <View style={[styles.card, { backgroundColor: colors[scheme].background }]}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={[styles.card, { backgroundColor: colors[scheme].background }]}
+    >
       <Avatar name={name} accent="phonics" />
       <View style={styles.cardBody}>
         <View style={styles.cardTopRow}>
@@ -76,7 +84,8 @@ function RosterRow({
           {Math.round(progress * 100)}% complete · ⭐ {stars}
         </ThemedText>
       </View>
-    </View>
+      <Text style={styles.chevron}>→</Text>
+    </Pressable>
   );
 }
 
@@ -90,6 +99,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.md,
     borderRadius: radii.lg,
     padding: spacing.md,
@@ -101,6 +111,9 @@ const styles = StyleSheet.create({
   cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  chevron: {
+    fontSize: 16,
   },
   activityRow: {
     flexDirection: 'row',

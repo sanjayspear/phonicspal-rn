@@ -1,4 +1,4 @@
-import { mockChildName, mockLearningPath, mockNodeTitles, phonicsTopics } from '@phonicspal/core';
+import { getNodeTitle, mockChildName, mockLearningPath, phonicsTopics } from '@phonicspal/core';
 import {
   Avatar,
   Button,
@@ -15,6 +15,9 @@ import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { DashboardShell } from '@/components/dashboard-shell';
+import { useLearningPaths } from '@/hooks/use-learning-paths';
+
+const CHILD_STUDENT_ID = mockLearningPath.studentId;
 
 const FREE_PLAY: { section: SectionId; title: string; subtitle: string; icon: string }[] = [
   { section: 'phonics', title: 'Phonics', subtitle: `${phonicsTopics.length} topics so far`, icon: '🔤' },
@@ -33,8 +36,10 @@ const STATUS_ICON: Record<string, string> = {
 
 export function ParentDashboard() {
   const scheme = useScheme();
-  const nodes = [...mockLearningPath.nodes].sort((a, b) => a.order - b.order);
-  const progress = nodes.filter((n) => n.status === 'submitted').length / nodes.length;
+  const { getPath } = useLearningPaths();
+  const path = getPath(CHILD_STUDENT_ID) ?? mockLearningPath;
+  const nodes = [...path.nodes].sort((a, b) => a.order - b.order);
+  const progress = nodes.length ? nodes.filter((n) => n.status === 'submitted').length / nodes.length : 0;
   const nextNode = nodes.find((n) => n.status !== 'submitted');
 
   return (
@@ -50,31 +55,35 @@ export function ParentDashboard() {
           </View>
         </View>
 
-        <ProgressBar progress={progress} accent="home" />
+        {nodes.length ? (
+          <>
+            <ProgressBar progress={progress} accent="home" />
 
-        <View style={styles.nodeList}>
-          {nodes.map((node) => (
-            <View key={node.id} style={styles.nodeRow}>
-              <Text style={styles.nodeIcon}>{STATUS_ICON[node.status]}</Text>
-              <ThemedText
-                variant="body"
-                color={node.status === 'locked' ? 'labelSecondary' : 'label'}
-              >
-                {mockNodeTitles[node.refId] ?? node.refId}
-              </ThemedText>
+            <View style={styles.nodeList}>
+              {nodes.map((node) => (
+                <View key={node.id} style={styles.nodeRow}>
+                  <Text style={styles.nodeIcon}>{STATUS_ICON[node.status]}</Text>
+                  <ThemedText
+                    variant="body"
+                    color={node.status === 'locked' ? 'labelSecondary' : 'label'}
+                  >
+                    {getNodeTitle(node)}
+                  </ThemedText>
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
 
-        {nextNode ? (
-          <Button
-            title={`Continue: ${mockNodeTitles[nextNode.refId] ?? nextNode.refId}`}
-            accent="home"
-            onPress={() => {}}
-          />
+            {nextNode ? (
+              <Button title={`Continue: ${getNodeTitle(nextNode)}`} accent="home" onPress={() => {}} />
+            ) : (
+              <ThemedText variant="body" color="labelSecondary">
+                All caught up — great work! 🎉
+              </ThemedText>
+            )}
+          </>
         ) : (
           <ThemedText variant="body" color="labelSecondary">
-            All caught up — great work! 🎉
+            No path assigned yet — your teacher will add one soon.
           </ThemedText>
         )}
       </View>
