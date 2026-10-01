@@ -11,4 +11,6 @@ export * from './RoleTile';
 export * from './ProgressBar';
 export * from './Avatar';
 export * from './PhonicsCardTile';
+export * from './PhonicsGroupCard';
+export * from './PhonicsWordTile';
 export * from './accessibility';

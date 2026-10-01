@@ -2,11 +2,16 @@
 
 export type Role = 'teacher' | 'parent' | 'solo';
 
-// A 'cards'-view topic as v1's js/topics.js and phonics-views.js render it:
-// a grid of cards (symbol, example words, optional tag/hint), tap to focus
-// one. v1 has ~10 other view types (words, family, boxes, sentences, …) —
-// those aren't modeled here yet; see docs/DESIGN.md §5.3 (content
-// migration is an open item, this covers only the topics ported so far).
+// v1's js/topics.js has 62 topics across 22 distinct "view" types (cards,
+// groups, words, family, boxes, sentences, builder, …) — each view type is
+// a genuinely different page layout in v1's phonics-views.js. All 62
+// topics' catalog metadata (id/name/icon/intro/tip) is ported so Phonics
+// browsing is complete, but only the view types with a real renderer in
+// this app (see apps/app's phonics screens) are interactive; the rest
+// carry their real data/intro/tip but render a "coming soon" placeholder
+// until a matching view component exists. This is tracked honestly via
+// the `view` tag — never silently stubbed as 'cards'.
+
 export interface PhonicsCard {
   symbol: string;
   exampleWords: string[];
@@ -14,13 +19,78 @@ export interface PhonicsCard {
   hint?: string;
 }
 
-export interface PhonicsTopic {
+export interface PhonicsGroup {
+  big: string;
+  title: string;
+  sub?: string;
+  words: string[];
+}
+
+// A 'words'-view item is a hyphen-joined sound sequence, e.g. 'c-a-t' or
+// 'sh-i-p' — tap to blend the sounds into the whole word.
+export type PhonicsWordItem = string;
+
+export type PhonicsViewType =
+  | 'cards'
+  | 'groups'
+  | 'words'
+  | 'family'
+  | 'pairs'
+  | 'boxes'
+  | 'dictation'
+  | 'sentences'
+  | 'mix'
+  | 'listen'
+  | 'clap'
+  | 'onset'
+  | 'sounds'
+  | 'swap'
+  | 'names'
+  | 'letters'
+  | 'magic'
+  | 'builder'
+  | 'sight'
+  | 'flash'
+  | 'stories'
+  | 'fluency';
+
+interface PhonicsTopicBase {
   id: string;
   name: string;
   icon: string;
   intro: string;
   tip: string;
+}
+
+export interface CardsTopic extends PhonicsTopicBase {
+  view: 'cards';
   cards: PhonicsCard[];
+}
+
+export interface GroupsTopic extends PhonicsTopicBase {
+  view: 'groups';
+  groups: PhonicsGroup[];
+}
+
+export interface WordsTopic extends PhonicsTopicBase {
+  view: 'words';
+  words: PhonicsWordItem[];
+}
+
+// Catalogued but not yet interactive — see header comment.
+export interface PendingTopic extends PhonicsTopicBase {
+  view: Exclude<PhonicsViewType, 'cards' | 'groups' | 'words'>;
+}
+
+export type PhonicsTopic = CardsTopic | GroupsTopic | WordsTopic | PendingTopic;
+
+// The 8 browsing categories topics are organized under (v1's GROUPS) — a
+// topic can appear in more than one category, same as v1.
+export interface TopicCategory {
+  id: string;
+  name: string;
+  icon: string;
+  topicIds: string[];
 }
 
 export type LearningPathNodeType = 'topic' | 'assignment';

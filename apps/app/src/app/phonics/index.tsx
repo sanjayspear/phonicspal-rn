@@ -1,4 +1,4 @@
-import { phonicsTopics } from '@phonicspal/core';
+import { phonicsTopics, topicCategories } from '@phonicspal/core';
 import {
   ThemedText,
   colors,
@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/components/screen-header';
 
-export default function PhonicsListScreen() {
+export default function PhonicsCategoriesScreen() {
   const scheme = useScheme();
 
   return (
@@ -28,22 +28,22 @@ export default function PhonicsListScreen() {
         <ScrollView contentContainerStyle={styles.content}>
           <ScreenHeader title="Phonics" />
           <ThemedText variant="body" color="labelSecondary">
-            {phonicsTopics.length} topics so far — more are being ported from the original app.
+            {phonicsTopics.length} topics across {topicCategories.length} groups.
           </ThemedText>
 
           <View style={styles.list}>
-            {phonicsTopics.map((topic) => (
+            {topicCategories.map((category) => (
               <Pressable
-                key={topic.id}
-                onPress={() => router.push(`/phonics/${topic.id}`)}
+                key={category.id}
+                onPress={() => router.push(`/phonics/category/${category.id}`)}
                 style={[styles.row, { backgroundColor: colors[scheme].background }]}
                 accessibilityRole="button"
               >
-                <Text style={styles.icon}>{topic.icon}</Text>
+                <Text style={styles.icon}>{category.icon}</Text>
                 <View style={styles.rowText}>
-                  <ThemedText variant="subtitle">{topic.name}</ThemedText>
-                  <ThemedText variant="body" color="labelSecondary" numberOfLines={2}>
-                    {topic.intro}
+                  <ThemedText variant="subtitle">{category.name}</ThemedText>
+                  <ThemedText variant="body" color="labelSecondary">
+                    {category.topicIds.length} topics
                   </ThemedText>
                 </View>
                 <Text style={styles.chevron}>→</Text>

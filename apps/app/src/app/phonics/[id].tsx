@@ -1,6 +1,8 @@
 import { getPhonicsTopic } from '@phonicspal/core';
 import {
   PhonicsCardTile,
+  PhonicsGroupCard,
+  PhonicsWordTile,
   ThemedText,
   colors,
   radii,
@@ -22,6 +24,7 @@ export default function PhonicsTopicScreen() {
   const scheme = useScheme();
   const topic = getPhonicsTopic(id);
   const [selected, setSelected] = useState<string | null>(null);
+  const [blended, setBlended] = useState<Set<string>>(new Set());
 
   if (!topic) {
     return (
@@ -57,16 +60,47 @@ export default function PhonicsTopicScreen() {
             </ThemedText>
           </View>
 
-          <View style={styles.grid}>
-            {topic.cards.map((card) => (
-              <PhonicsCardTile
-                key={card.symbol}
-                card={card}
-                selected={selected === card.symbol}
-                onPress={() => setSelected((s) => (s === card.symbol ? null : card.symbol))}
-              />
-            ))}
-          </View>
+          {topic.view === 'cards' ? (
+            <View style={styles.grid}>
+              {topic.cards.map((card) => (
+                <PhonicsCardTile
+                  key={card.symbol}
+                  card={card}
+                  selected={selected === card.symbol}
+                  onPress={() => setSelected((s) => (s === card.symbol ? null : card.symbol))}
+                />
+              ))}
+            </View>
+          ) : topic.view === 'groups' ? (
+            <View style={styles.stack}>
+              {topic.groups.map((group, i) => (
+                <PhonicsGroupCard key={i} group={group} />
+              ))}
+            </View>
+          ) : topic.view === 'words' ? (
+            <View style={styles.grid}>
+              {topic.words.map((word) => (
+                <PhonicsWordTile
+                  key={word}
+                  word={word}
+                  blended={blended.has(word)}
+                  onPress={() =>
+                    setBlended((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(word)) next.delete(word);
+                      else next.add(word);
+                      return next;
+                    })
+                  }
+                />
+              ))}
+            </View>
+          ) : (
+            <ThemedText variant="body" color="labelSecondary">
+              The interactive practice for this topic isn{'’'}t built yet — the intro and tip
+              above are the real content, same as v1.
+            </ThemedText>
+          )}
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -90,6 +124,9 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  stack: {
     gap: spacing.sm,
   },
 });
