@@ -13,6 +13,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { LearningPathsProvider } from '@/hooks/use-learning-paths';
 import { SettingsProvider } from '@/hooks/use-settings';
+import { VocabularyProvider } from '@/hooks/use-vocabulary';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -51,9 +52,11 @@ export default function RootLayout() {
       <SettingsProvider>
         <AuthProvider>
           <LearningPathsProvider>
-            <AuthGate ready={fontsLoaded}>
-              <Stack screenOptions={{ headerShown: false }} />
-            </AuthGate>
+            <VocabularyProvider>
+              <AuthGate ready={fontsLoaded}>
+                <Stack screenOptions={{ headerShown: false }} />
+              </AuthGate>
+            </VocabularyProvider>
           </LearningPathsProvider>
         </AuthProvider>
       </SettingsProvider>

@@ -102,6 +102,7 @@ export function ParentDashboard() {
             icon={<Text style={styles.cardIcon}>{item.icon}</Text>}
             onPress={() => {
               if (item.section === 'phonics') router.push('/phonics');
+              else if (item.section === 'vocab') router.push('/vocab');
             }}
           />
         ))}

@@ -20,7 +20,7 @@ export function SoloHome() {
   return (
     <DashboardShell gradientAccent="phonics" title="PhonicsPal">
       <ThemedText variant="body" color="labelSecondary">
-        Tap Phonics to open a real topic — the rest are still a preview.
+        Tap Phonics or Vocab to open real content — Read/Books are still a preview.
       </ThemedText>
 
       <RewardBurst trigger={rewardTrigger}>
@@ -37,6 +37,7 @@ export function SoloHome() {
             icon={<Text style={styles.cardIcon}>{item.icon}</Text>}
             onPress={() => {
               if (item.section === 'phonics') router.push('/phonics');
+              else if (item.section === 'vocab') router.push('/vocab');
               else setRewardTrigger((n) => n + 1);
             }}
           />
