@@ -19,9 +19,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/hooks/use-auth';
 
 const ROLES: { role: Role; title: string; description: string; icon: string }[] = [
-  { role: 'teacher', title: 'Teacher', description: 'Assign and track a class', icon: '🍎' },
+  { role: 'teacher', title: 'Teacher', description: 'Assign and track a class', icon: '🧑‍🏫' },
   { role: 'parent', title: 'Parent', description: "Guide your child's practice", icon: '👪' },
-  { role: 'solo', title: 'Just me', description: 'Free play, no roster', icon: '🙂' },
+  { role: 'solo', title: 'Just me', description: 'Free play, no roster', icon: '🚀' },
 ];
 
 export default function SignUpScreen() {
