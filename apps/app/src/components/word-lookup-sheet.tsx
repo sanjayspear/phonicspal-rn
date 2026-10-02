@@ -30,7 +30,7 @@ export function WordLookupSheet({ lookup, accent, extraAction }: WordLookupSheet
   const scheme = useScheme();
   const color = sectionColors[accent];
   const { isSaved, saveWord } = useVocabulary();
-  const { word, result, loading, failed, close } = lookup;
+  const { word, result, loading, failure, open, close } = lookup;
 
   return (
     <Modal visible={word !== null} transparent animationType="fade" onRequestClose={close}>
@@ -62,7 +62,14 @@ export function WordLookupSheet({ lookup, accent, extraAction }: WordLookupSheet
                 onPress={() => saveWord(result)}
               />
             </>
-          ) : failed ? (
+          ) : failure === 'offline' ? (
+            <>
+              <ThemedText variant="body" color="labelSecondary">
+                Couldn't reach the dictionary. Check your internet connection and try again.
+              </ThemedText>
+              <Button title="Try again" variant="secondary" accent={accent} onPress={() => word && open(word)} />
+            </>
+          ) : failure === 'not-found' ? (
             <ThemedText variant="body" color="labelSecondary">
               No definition found for this word.
             </ThemedText>

@@ -3,11 +3,17 @@ import { useState } from 'react';
 
 import { lookupWord } from '@/lib/dictionary-lookup';
 
+// 'not-found' is a real answer (the dictionary was reached and genuinely
+// has no entry); 'offline' means the lookup never got an answer at all —
+// kept distinct so the sheet can tell the user which one happened instead
+// of showing "No definition found" for a plain connectivity failure.
+export type WordLookupFailure = 'not-found' | 'offline';
+
 export interface WordLookupState {
   word: string | null;
   result: DictionaryWord | null;
   loading: boolean;
-  failed: boolean;
+  failure: WordLookupFailure | null;
   open: (rawWord: string) => void;
   close: () => void;
 }
@@ -20,7 +26,7 @@ export function useWordLookup(): WordLookupState {
   const [word, setWord] = useState<string | null>(null);
   const [result, setResult] = useState<DictionaryWord | null>(null);
   const [loading, setLoading] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [failure, setFailure] = useState<WordLookupFailure | null>(null);
 
   async function open(rawWord: string) {
     const clean = rawWord.replace(/[^a-zA-Z']/g, '');
@@ -28,19 +34,19 @@ export function useWordLookup(): WordLookupState {
 
     setWord(clean);
     setResult(null);
-    setFailed(false);
+    setFailure(null);
     setLoading(true);
-    const found = await lookupWord(clean);
+    const outcome = await lookupWord(clean);
     setLoading(false);
-    if (found) setResult(found);
-    else setFailed(true);
+    if (outcome.status === 'found') setResult(outcome.word);
+    else setFailure(outcome.status);
   }
 
   function close() {
     setWord(null);
     setResult(null);
-    setFailed(false);
+    setFailure(null);
   }
 
-  return { word, result, loading, failed, open, close };
+  return { word, result, loading, failure, open, close };
 }
