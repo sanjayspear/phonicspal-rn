@@ -1,7 +1,7 @@
 import type { PhonicsCard } from '@phonicspal/core';
 import { expoSpeechEngine } from '@phonicspal/speech';
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ThemedText } from './ThemedText';
 import { colors, radii, sectionColors, spacing, withAlpha } from './tokens';
@@ -11,6 +11,10 @@ export interface PhonicsCardTileProps {
   card: PhonicsCard;
   selected: boolean;
   onPress: () => void;
+  // Tap target per example word, separate from the card's own select/speak
+  // tap — opens the shared word-lookup sheet (apps/app's phonics screen).
+  // Omitted call sites just don't get a lookup affordance.
+  onWordPress?: (word: string) => void;
 }
 
 // Renders one card of a v1 'cards'-view phonics topic (Short Vowels, Long
@@ -18,7 +22,7 @@ export interface PhonicsCardTileProps {
 // words/hint, and hear it spoken via the shared TTS engine (the same
 // generic voice Read/Books use — no pre-rendered sound clips, see
 // packages/core/src/topics.ts header).
-export function PhonicsCardTile({ card, selected, onPress }: PhonicsCardTileProps) {
+export function PhonicsCardTile({ card, selected, onPress, onWordPress }: PhonicsCardTileProps) {
   const scheme = useScheme();
   const accent = sectionColors.phonics;
 
@@ -60,9 +64,33 @@ export function PhonicsCardTile({ card, selected, onPress }: PhonicsCardTileProp
 
       {selected ? (
         <View style={styles.details}>
-          <ThemedText variant="body" color="labelSecondary" style={styles.words}>
-            {card.exampleWords.join(' · ')}
-          </ThemedText>
+          <View style={styles.wordRow}>
+            {card.exampleWords.map((w, i) => (
+              <Pressable
+                key={w}
+                disabled={!onWordPress}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  onWordPress?.(w);
+                }}
+              >
+                <Text>
+                  <ThemedText
+                    variant="body"
+                    color="labelSecondary"
+                    style={onWordPress && styles.wordLink}
+                  >
+                    {w}
+                  </ThemedText>
+                  {i < card.exampleWords.length - 1 ? (
+                    <ThemedText variant="body" color="labelSecondary">
+                      {' · '}
+                    </ThemedText>
+                  ) : null}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
           {card.hint ? (
             <ThemedText variant="body" color="labelSecondary" style={styles.hint}>
               {card.hint}
@@ -96,8 +124,13 @@ const styles = StyleSheet.create({
   details: {
     gap: spacing.xs,
   },
-  words: {
-    textAlign: 'center',
+  wordRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  wordLink: {
+    textDecorationLine: 'underline',
   },
   hint: {
     textAlign: 'center',

@@ -9,6 +9,10 @@ import { useScheme } from './useScheme';
 
 export interface PhonicsClapCardProps {
   entry: ClapWord;
+  // Shown as a small 📖 button next to the word, separate from the card's
+  // own clap-it-out tap — opens the shared word-lookup sheet (apps/app's
+  // phonics screen). Omitted call sites just don't get a lookup affordance.
+  onWordPress?: (word: string) => void;
 }
 
 // Renders one 'clap'-view word (Syllables, Multisyllabic Words): tap
@@ -16,7 +20,7 @@ export interface PhonicsClapCardProps {
 // chunk being read highlighted as it's spoken, then the whole word said
 // together — the "read one chunk at a time" interaction both clap topics'
 // intros describe.
-export function PhonicsClapCard({ entry }: PhonicsClapCardProps) {
+export function PhonicsClapCard({ entry, onWordPress }: PhonicsClapCardProps) {
   const scheme = useScheme();
   const accent = sectionColors.phonics;
   const [activeChunk, setActiveChunk] = useState<number | null>(null);
@@ -57,9 +61,24 @@ export function PhonicsClapCard({ entry }: PhonicsClapCardProps) {
           </View>
         ))}
       </View>
-      <ThemedText variant="body" color="labelSecondary">
-        👏 {clapping ? 'Clapping…' : 'Tap to clap it out'}
-      </ThemedText>
+      <View style={styles.caption}>
+        <ThemedText variant="body" color="labelSecondary">
+          👏 {clapping ? 'Clapping…' : 'Tap to clap it out'}
+        </ThemedText>
+        {onWordPress ? (
+          // No accessibilityRole here: the outer card already renders as a
+          // <button> on web, and nesting another is invalid HTML.
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation();
+              onWordPress(entry.word);
+            }}
+            accessibilityLabel={`Look up "${entry.word}"`}
+          >
+            <ThemedText variant="label">📖</ThemedText>
+          </Pressable>
+        ) : null}
+      </View>
     </Pressable>
   );
 }
@@ -80,5 +99,10 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
+  },
+  caption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
 });

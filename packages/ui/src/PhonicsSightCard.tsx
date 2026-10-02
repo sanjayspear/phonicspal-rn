@@ -2,18 +2,23 @@ import type { SightWordEntry } from '@phonicspal/core';
 import { expoSpeechEngine } from '@phonicspal/speech';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
+import { ThemedText } from './ThemedText';
 import { colors, radii, sectionColors, spacing } from './tokens';
 import { useScheme } from './useScheme';
 
 export interface PhonicsSightCardProps {
   entry: SightWordEntry;
+  // Shown as a small 📖 button below the word, separate from the tile's
+  // own speak tap — opens the shared word-lookup sheet (apps/app's
+  // phonics screen). Omitted call sites just don't get a lookup affordance.
+  onWordPress?: (word: string) => void;
 }
 
 // Renders one 'sight'-view word (Irregular & High-Frequency Words): tap to
 // hear it, with the span that doesn't follow regular phonics rules
 // (entry.trickyStart..trickyEnd) colored separately, matching the topic's
 // own "the highlighted part does not follow the usual rules" intro.
-export function PhonicsSightCard({ entry }: PhonicsSightCardProps) {
+export function PhonicsSightCard({ entry, onWordPress }: PhonicsSightCardProps) {
   const scheme = useScheme();
   const accent = sectionColors.phonics;
   const { word, trickyStart, trickyEnd } = entry;
@@ -34,6 +39,17 @@ export function PhonicsSightCard({ entry }: PhonicsSightCardProps) {
         </Text>
         <Text style={{ color: colors[scheme].label }}>{word.slice(trickyEnd)}</Text>
       </Text>
+      {onWordPress ? (
+        <Pressable
+          onPress={(e) => {
+            e.stopPropagation();
+            onWordPress(word);
+          }}
+          accessibilityLabel={`Look up "${word}"`}
+        >
+          <ThemedText variant="label">📖</ThemedText>
+        </Pressable>
+      ) : null}
     </Pressable>
   );
 }
@@ -47,6 +63,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.sm,
+    gap: spacing.xs,
   },
   word: {
     fontSize: 24,

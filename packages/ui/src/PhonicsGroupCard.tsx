@@ -1,6 +1,6 @@
 import type { PhonicsGroup } from '@phonicspal/core';
 import { expoSpeechEngine } from '@phonicspal/speech';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ThemedText } from './ThemedText';
 import { colors, radii, sectionColors, spacing, withAlpha } from './tokens';
@@ -8,6 +8,10 @@ import { useScheme } from './useScheme';
 
 export interface PhonicsGroupCardProps {
   group: PhonicsGroup;
+  // Tap target per word, separate from the card's own "hear them all" tap
+  // — opens the shared word-lookup sheet (apps/app's phonics screen).
+  // Omitted call sites just don't get a lookup affordance.
+  onWordPress?: (word: string) => void;
 }
 
 // Renders one category of a v1 'groups'-view phonics topic (Rhyming,
@@ -15,7 +19,7 @@ export interface PhonicsGroupCardProps {
 // example words — tap to hear the words read aloud via the shared TTS
 // engine. No per-word selection like PhonicsCardTile — groups topics show
 // every category's words at once (matches v1).
-export function PhonicsGroupCard({ group }: PhonicsGroupCardProps) {
+export function PhonicsGroupCard({ group, onWordPress }: PhonicsGroupCardProps) {
   const scheme = useScheme();
   const accent = sectionColors.phonics;
 
@@ -40,9 +44,29 @@ export function PhonicsGroupCard({ group }: PhonicsGroupCardProps) {
             {group.sub}
           </ThemedText>
         ) : null}
-        <ThemedText variant="body" style={{ color: accent }}>
-          {group.words.join(' · ')}
-        </ThemedText>
+        <View style={styles.wordRow}>
+          {group.words.map((w, i) => (
+            <Pressable
+              key={w}
+              disabled={!onWordPress}
+              onPress={(e) => {
+                e.stopPropagation();
+                onWordPress?.(w);
+              }}
+            >
+              <Text>
+                <ThemedText variant="body" style={[{ color: accent }, onWordPress && styles.wordLink]}>
+                  {w}
+                </ThemedText>
+                {i < group.words.length - 1 ? (
+                  <ThemedText variant="body" style={{ color: accent }}>
+                    {' · '}
+                  </ThemedText>
+                ) : null}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
     </Pressable>
   );
@@ -66,5 +90,12 @@ const styles = StyleSheet.create({
   text: {
     flex: 1,
     gap: spacing.xs,
+  },
+  wordRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  wordLink: {
+    textDecorationLine: 'underline',
   },
 });

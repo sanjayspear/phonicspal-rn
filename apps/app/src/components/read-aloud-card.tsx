@@ -1,4 +1,3 @@
-import type { DictionaryWord } from '@phonicspal/core';
 import { expoSpeechEngine } from '@phonicspal/speech';
 import {
   Button,
@@ -12,10 +11,10 @@ import {
   type SectionId,
 } from '@phonicspal/ui';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { useVocabulary } from '@/hooks/use-vocabulary';
-import { lookupWord } from '@/lib/dictionary-lookup';
+import { WordLookupSheet } from '@/components/word-lookup-sheet';
+import { useWordLookup } from '@/hooks/use-word-lookup';
 
 interface Token {
   text: string;
@@ -63,7 +62,6 @@ export function ReadAloudCard({ text, accent }: ReadAloudCardProps) {
   const color = sectionColors[accent];
   const tokens = useMemo(() => tokenize(text), [text]);
   const pages = useMemo(() => paginate(tokens), [tokens]);
-  const { isSaved, saveWord } = useVocabulary();
 
   const [pageIndex, setPageIndex] = useState(0);
   const page = Math.min(pageIndex, pages.length - 1);
@@ -101,39 +99,19 @@ export function ReadAloudCard({ text, accent }: ReadAloudCardProps) {
 
   useEffect(() => setPageIndex(0), [text]);
 
-  // Word-lookup sheet state — tapping any word (whether or not TTS is
-  // playing) looks it up without interrupting playback, so a child can tap
-  // a word they like mid-listen (docs/DESIGN.md's vocabulary-saving flow).
-  const [lookupWordText, setLookupWordText] = useState<string | null>(null);
-  const [lookupResult, setLookupResult] = useState<DictionaryWord | null>(null);
-  const [lookupLoading, setLookupLoading] = useState(false);
-  const [lookupFailed, setLookupFailed] = useState(false);
+  // Tapping any word (whether or not TTS is playing) looks it up without
+  // interrupting playback, so a child can tap a word they like mid-listen
+  // (docs/DESIGN.md's vocabulary-saving flow).
+  const lookup = useWordLookup();
 
   useEffect(() => () => expoSpeechEngine.stop(), []);
 
-  async function handleWordPress(rawWord: string, index: number) {
+  function handleWordPress(rawWord: string, index: number) {
     // Tapping a word always places the cursor there — whether or not the
-    // lookup below finds anything, "the next Listen press starts here" is
-    // still true, same as a tap-to-position-cursor on any text reader.
+    // lookup finds anything, "the next Listen press starts here" is still
+    // true, same as a tap-to-position-cursor on any text reader.
     setCursorIndex(index);
-
-    const clean = rawWord.replace(/[^a-zA-Z']/g, '');
-    if (!clean) return;
-
-    setLookupWordText(clean);
-    setLookupResult(null);
-    setLookupFailed(false);
-    setLookupLoading(true);
-    const result = await lookupWord(clean);
-    setLookupLoading(false);
-    if (result) setLookupResult(result);
-    else setLookupFailed(true);
-  }
-
-  function closeLookup() {
-    setLookupWordText(null);
-    setLookupResult(null);
-    setLookupFailed(false);
+    lookup.open(rawWord);
   }
 
   async function playFrom(startIndex: number) {
@@ -188,7 +166,10 @@ export function ReadAloudCard({ text, accent }: ReadAloudCardProps) {
   return (
     <>
       <View style={[styles.card, { backgroundColor: colors[scheme].background }]}>
-        <Text style={styles.text}>
+        {/* Explicit color, not left to RN's default-black Text: on a dark
+            card (dark mode) that default renders as near-invisible black
+            text on a near-black background. */}
+        <Text style={[styles.text, { color: colors[scheme].label }]}>
           {pageTokens.map((t, i) => (
             <Text key={i}>
               {i === cursorIndex ? <Text style={[styles.caret, { color }]}>▎</Text> : null}
@@ -247,53 +228,17 @@ export function ReadAloudCard({ text, accent }: ReadAloudCardProps) {
         </View>
       ) : null}
 
-      <Modal visible={lookupWordText !== null} transparent animationType="fade" onRequestClose={closeLookup}>
-        <Pressable style={styles.backdrop} onPress={closeLookup}>
-          {/* Stops the tap from reaching the backdrop's onPress above (react-native-web renders real DOM nodes, so untrapped clicks bubble). */}
-          <Pressable
-            style={[styles.sheet, { backgroundColor: colors[scheme].background }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <ThemedText variant="subtitle">{lookupWordText}</ThemedText>
-
-            {lookupLoading ? (
-              <ActivityIndicator color={color} />
-            ) : lookupResult ? (
-              <>
-                <ThemedText variant="body" color="labelSecondary" style={styles.italic}>
-                  {lookupResult.p}
-                </ThemedText>
-                <ThemedText variant="body">{lookupResult.m}</ThemedText>
-                {lookupResult.e ? (
-                  <ThemedText variant="body" color="labelSecondary" style={styles.italic}>
-                    “{lookupResult.e}”
-                  </ThemedText>
-                ) : null}
-                <Button
-                  title={isSaved(lookupResult.w) ? '✓ Saved to My Vocabulary' : '+ Save to My Vocabulary'}
-                  accent="vocab"
-                  disabled={isSaved(lookupResult.w)}
-                  onPress={() => saveWord(lookupResult)}
-                />
-              </>
-            ) : lookupFailed ? (
-              <ThemedText variant="body" color="labelSecondary">
-                No definition found for this word.
-              </ThemedText>
-            ) : null}
-
-            <Button
-              title="▶ Read from here"
-              accent={accent}
-              onPress={() => {
-                closeLookup();
-                play();
-              }}
-            />
-            <Button title="Close" variant="secondary" accent={accent} onPress={closeLookup} />
-          </Pressable>
-        </Pressable>
-      </Modal>
+      <WordLookupSheet
+        lookup={lookup}
+        accent={accent}
+        extraAction={{
+          title: '▶ Read from here',
+          onPress: () => {
+            lookup.close();
+            play();
+          },
+        }}
+      />
     </>
   );
 }
@@ -329,22 +274,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
-  },
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.lg,
-  },
-  sheet: {
-    width: '100%',
-    maxWidth: 420,
-    borderRadius: radii.xl,
-    padding: spacing.lg,
-    gap: spacing.sm,
-  },
-  italic: {
-    fontStyle: 'italic',
   },
 });

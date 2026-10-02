@@ -23,8 +23,10 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/components/screen-header';
+import { WordLookupSheet } from '@/components/word-lookup-sheet';
 import { useActivity } from '@/hooks/use-activity';
 import { useLearningPaths } from '@/hooks/use-learning-paths';
+import { useWordLookup } from '@/hooks/use-word-lookup';
 import { LetterMatchGame, ListenGame, SoundFocusExplorer } from '@/components/phonics-games';
 
 export default function PhonicsTopicScreen() {
@@ -41,6 +43,7 @@ export default function PhonicsTopicScreen() {
 
   const { getPath, submitNode } = useLearningPaths();
   const { addEvent } = useActivity();
+  const lookup = useWordLookup();
   // Set only when this screen was deep-linked from the parent dashboard's
   // "Continue" button (docs/DESIGN.md §4.3's "guided mode") — browsing
   // Phonics freely never passes these params, so the banner/Submit button
@@ -101,13 +104,14 @@ export default function PhonicsTopicScreen() {
                   card={card}
                   selected={selected === card.symbol}
                   onPress={() => setSelected((s) => (s === card.symbol ? null : card.symbol))}
+                  onWordPress={lookup.open}
                 />
               ))}
             </View>
           ) : topic.view === 'groups' ? (
             <View style={styles.stack}>
               {topic.groups.map((group, i) => (
-                <PhonicsGroupCard key={i} group={group} />
+                <PhonicsGroupCard key={i} group={group} onWordPress={lookup.open} />
               ))}
             </View>
           ) : topic.view === 'words' ? (
@@ -125,25 +129,26 @@ export default function PhonicsTopicScreen() {
                       return next;
                     })
                   }
+                  onWordPress={lookup.open}
                 />
               ))}
             </View>
           ) : topic.view === 'family' ? (
             <View style={styles.stack}>
               {topic.families.map((family) => (
-                <PhonicsFamilyCard key={family.rime} family={family} />
+                <PhonicsFamilyCard key={family.rime} family={family} onWordPress={lookup.open} />
               ))}
             </View>
           ) : topic.view === 'sight' ? (
             <View style={styles.grid}>
               {topic.words.map((entry) => (
-                <PhonicsSightCard key={entry.word} entry={entry} />
+                <PhonicsSightCard key={entry.word} entry={entry} onWordPress={lookup.open} />
               ))}
             </View>
           ) : topic.view === 'clap' ? (
             <View style={styles.grid}>
               {topic.words.map((entry) => (
-                <PhonicsClapCard key={entry.word} entry={entry} />
+                <PhonicsClapCard key={entry.word} entry={entry} onWordPress={lookup.open} />
               ))}
             </View>
           ) : topic.view === 'listen' ? (
@@ -182,6 +187,8 @@ export default function PhonicsTopicScreen() {
           ) : null}
         </ScrollView>
       </SafeAreaView>
+
+      <WordLookupSheet lookup={lookup} accent="phonics" />
     </View>
   );
 }

@@ -8,13 +8,17 @@ import { useScheme } from './useScheme';
 
 export interface PhonicsFamilyCardProps {
   family: WordFamily;
+  // Shown as a small 📖 button per word, separate from the tile's own
+  // speak tap — opens the shared word-lookup sheet (apps/app's phonics
+  // screen). Omitted call sites just don't get a lookup affordance.
+  onWordPress?: (word: string) => void;
 }
 
 // Renders one 'family'-view rime (Word Families): the ending stays fixed,
 // tap any onset letter to swap it in and hear the real word it makes —
 // cat, hat, bat, … — the same "change the first letter" interaction the
 // topic's own intro describes.
-export function PhonicsFamilyCard({ family }: PhonicsFamilyCardProps) {
+export function PhonicsFamilyCard({ family, onWordPress }: PhonicsFamilyCardProps) {
   const scheme = useScheme();
   const accent = sectionColors.phonics;
 
@@ -44,6 +48,17 @@ export function PhonicsFamilyCard({ family }: PhonicsFamilyCardProps) {
             <ThemedText variant="body" color="labelSecondary">
               {o.word}
             </ThemedText>
+            {onWordPress ? (
+              <Pressable
+                onPress={(e) => {
+                  e.stopPropagation();
+                  onWordPress(o.word);
+                }}
+                accessibilityLabel={`Look up "${o.word}"`}
+              >
+                <ThemedText variant="label">📖</ThemedText>
+              </Pressable>
+            ) : null}
           </Pressable>
         ))}
       </View>
