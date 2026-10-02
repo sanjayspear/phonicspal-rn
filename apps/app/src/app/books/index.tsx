@@ -12,7 +12,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/components/screen-header';
@@ -50,6 +50,15 @@ export default function BooksListScreen() {
     }
     if ((asset.size ?? 0) > MAX_UPLOAD_SIZE) {
       setStatus('That file is bigger than 35MB. Please choose a smaller one.');
+      return;
+    }
+    // extractPdfText is a native stub that always throws (pdfjs-dist needs
+    // a Web Worker, which doesn't exist in Hermes — see pdf-text.ts's
+    // header). Catching that below and showing the generic "scanned or
+    // protected" message would lie about why a perfectly good PDF failed,
+    // so this short-circuits with the real reason instead.
+    if (ext === 'pdf' && Platform.OS !== 'web') {
+      setStatus('PDF upload works on the web version for now — try a TXT or EPUB file here, or open PhonicsPal in a browser to upload a PDF.');
       return;
     }
 
