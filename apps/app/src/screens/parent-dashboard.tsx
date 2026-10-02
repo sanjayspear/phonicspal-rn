@@ -1,16 +1,14 @@
-import { getNodeTitle, mockChildName, mockLearningPath, phonicsTopics, stories } from '@phonicspal/core';
+import { getNodeTitle, mockChildName, mockLearningPath } from '@phonicspal/core';
 import {
   Avatar,
   Button,
   ProgressBar,
   RewardBurst,
-  SectionCard,
   ThemedText,
   colors,
   radii,
   spacing,
   useScheme,
-  type SectionId,
 } from '@phonicspal/ui';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -21,13 +19,6 @@ import { useActivity } from '@/hooks/use-activity';
 import { useLearningPaths } from '@/hooks/use-learning-paths';
 
 const CHILD_STUDENT_ID = mockLearningPath.studentId;
-
-const FREE_PLAY: { section: SectionId; title: string; subtitle: string; icon: string }[] = [
-  { section: 'phonics', title: 'Phonics', subtitle: `${phonicsTopics.length} topics so far`, icon: '🔤' },
-  { section: 'read', title: 'Read', subtitle: `${stories.length} stories to listen to`, icon: '📖' },
-  { section: 'books', title: 'Books', subtitle: 'Upload a PDF, TXT or EPUB', icon: '📚' },
-  { section: 'vocab', title: 'Vocab', subtitle: 'Saved words', icon: '⭐' },
-];
 
 const STATUS_ICON: Record<string, string> = {
   submitted: '✅',
@@ -122,28 +113,6 @@ export function ParentDashboard() {
           </ThemedText>
         )}
       </View>
-
-      <View style={styles.sectionHeader}>
-        <ThemedText variant="subtitle">Or explore on your own</ThemedText>
-      </View>
-
-      <View style={styles.freePlay}>
-        {FREE_PLAY.map((item) => (
-          <SectionCard
-            key={item.section}
-            section={item.section}
-            title={item.title}
-            subtitle={item.subtitle}
-            icon={<Text style={styles.cardIcon}>{item.icon}</Text>}
-            onPress={() => {
-              if (item.section === 'phonics') router.push('/phonics');
-              else if (item.section === 'vocab') router.push('/vocab');
-              else if (item.section === 'read') router.push('/read');
-              else if (item.section === 'books') router.push('/books');
-            }}
-          />
-        ))}
-      </View>
     </DashboardShell>
   );
 }
@@ -176,14 +145,5 @@ const styles = StyleSheet.create({
   },
   nodeIcon: {
     fontSize: 16,
-  },
-  sectionHeader: {
-    marginTop: spacing.sm,
-  },
-  freePlay: {
-    gap: spacing.md,
-  },
-  cardIcon: {
-    fontSize: 28,
   },
 });

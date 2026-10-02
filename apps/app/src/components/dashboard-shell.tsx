@@ -39,6 +39,14 @@ export function DashboardShell({ gradientAccent, title, children }: DashboardShe
   const { session, logOut } = useAuth();
   const [active, setActive] = useState<SectionId>('home');
 
+  // BottomNav previously only updated this highlight state — tapping
+  // Phonics/Read/Books/Vocab visibly selected the pill but never actually
+  // took you anywhere, which reads as "the buttons don't work."
+  function handleNavChange(section: SectionId) {
+    setActive(section);
+    if (section !== 'home') router.push(`/${section}`);
+  }
+
   return (
     <View style={styles.root}>
       <LinearGradient
@@ -89,7 +97,7 @@ export function DashboardShell({ gradientAccent, title, children }: DashboardShe
             icon: <Text>{icon}</Text>,
           }))}
           active={active}
-          onChange={setActive}
+          onChange={handleNavChange}
         />
       </SafeAreaView>
     </View>
