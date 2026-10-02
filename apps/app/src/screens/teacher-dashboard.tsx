@@ -1,5 +1,5 @@
 import { mockRoster } from '@phonicspal/core';
-import { Avatar, ProgressBar, ThemedText, colors, radii, spacing, useScheme } from '@phonicspal/ui';
+import { Avatar, Button, ProgressBar, ThemedText, colors, radii, spacing, useScheme } from '@phonicspal/ui';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -14,7 +14,15 @@ export function TeacherDashboard() {
       <View style={styles.sectionHeader}>
         <ThemedText variant="subtitle">Your Class</ThemedText>
         <ThemedText variant="body" color="labelSecondary">
-          Code: XK3F9 · {mockRoster.length} students · tap a student to build their path
+          Code: XK3F9 · {mockRoster.length} students
+        </ThemedText>
+      </View>
+
+      <Button title="+ Build a Learning Path" accent="home" onPress={() => router.push('/build-path')} />
+
+      <View style={styles.sectionHeader}>
+        <ThemedText variant="body" color="labelSecondary">
+          Or tap a student below to view their progress or tweak just their path.
         </ThemedText>
       </View>
 

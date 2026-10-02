@@ -16,6 +16,14 @@ interface LearningPathsContextValue {
   loading: boolean;
   getPath: (studentId: string) => LearningPath | undefined;
   savePath: (path: LearningPath) => Promise<void>;
+  // Publishing one path to a whole class (docs/DESIGN.md §4.2's "fan-out on
+  // assign") means several studentId -> path writes landing in the same
+  // tick. Calling savePath once per student would race: each call reads
+  // `paths` from this closure, so two calls started before either's state
+  // update commits both compute `next` from the same stale base and the
+  // second setPaths silently drops the first's write. This merges them all
+  // into a single state update instead.
+  savePaths: (paths: LearningPath[]) => Promise<void>;
   submitNode: (studentId: string, nodeId: string) => Promise<void>;
 }
 
@@ -37,6 +45,13 @@ export function LearningPathsProvider({ children }: { children: ReactNode }) {
 
   async function savePath(path: LearningPath) {
     const next = { ...paths, [path.studentId]: path };
+    setPaths(next);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  }
+
+  async function savePaths(newPaths: LearningPath[]) {
+    const next = { ...paths };
+    for (const path of newPaths) next[path.studentId] = path;
     setPaths(next);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   }
@@ -65,6 +80,7 @@ export function LearningPathsProvider({ children }: { children: ReactNode }) {
     loading,
     getPath: (studentId) => paths[studentId],
     savePath,
+    savePaths,
     submitNode,
   };
 
