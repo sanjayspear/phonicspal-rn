@@ -1,7 +1,21 @@
+import type { DictionaryWord } from '@phonicspal/core';
 import { expoSpeechEngine } from '@phonicspal/speech';
-import { Button, colors, radii, sectionColors, spacing, useScheme, withAlpha, type SectionId } from '@phonicspal/ui';
+import {
+  Button,
+  ThemedText,
+  colors,
+  radii,
+  sectionColors,
+  spacing,
+  useScheme,
+  withAlpha,
+  type SectionId,
+} from '@phonicspal/ui';
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { useVocabulary } from '@/hooks/use-vocabulary';
+import { lookupWord } from '@/lib/dictionary-lookup';
 
 interface Token {
   text: string;
@@ -32,11 +46,40 @@ export function ReadAloudCard({ text, accent }: ReadAloudCardProps) {
   const scheme = useScheme();
   const color = sectionColors[accent];
   const tokens = useMemo(() => tokenize(text), [text]);
+  const { isSaved, saveWord } = useVocabulary();
 
   const [playing, setPlaying] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
+  // Word-lookup sheet state — tapping any word (whether or not TTS is
+  // playing) looks it up without interrupting playback, so a child can tap
+  // a word they like mid-listen (docs/DESIGN.md's vocabulary-saving flow).
+  const [lookupWordText, setLookupWordText] = useState<string | null>(null);
+  const [lookupResult, setLookupResult] = useState<DictionaryWord | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupFailed, setLookupFailed] = useState(false);
+
   useEffect(() => () => expoSpeechEngine.stop(), []);
+
+  async function handleWordPress(rawWord: string) {
+    const clean = rawWord.replace(/[^a-zA-Z']/g, '');
+    if (!clean) return;
+
+    setLookupWordText(clean);
+    setLookupResult(null);
+    setLookupFailed(false);
+    setLookupLoading(true);
+    const result = await lookupWord(clean);
+    setLookupLoading(false);
+    if (result) setLookupResult(result);
+    else setLookupFailed(true);
+  }
+
+  function closeLookup() {
+    setLookupWordText(null);
+    setLookupResult(null);
+    setLookupFailed(false);
+  }
 
   async function play() {
     setPlaying(true);
@@ -65,6 +108,7 @@ export function ReadAloudCard({ text, accent }: ReadAloudCardProps) {
           {tokens.map((t, i) => (
             <Text
               key={i}
+              onPress={() => handleWordPress(t.text)}
               style={[
                 styles.word,
                 i === activeIndex && { backgroundColor: withAlpha(color, 0.25), color },
@@ -81,6 +125,46 @@ export function ReadAloudCard({ text, accent }: ReadAloudCardProps) {
       ) : (
         <Button title="▶ Listen" accent={accent} onPress={play} />
       )}
+
+      <Modal visible={lookupWordText !== null} transparent animationType="fade" onRequestClose={closeLookup}>
+        <Pressable style={styles.backdrop} onPress={closeLookup}>
+          {/* Stops the tap from reaching the backdrop's onPress above (react-native-web renders real DOM nodes, so untrapped clicks bubble). */}
+          <Pressable
+            style={[styles.sheet, { backgroundColor: colors[scheme].background }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <ThemedText variant="subtitle">{lookupWordText}</ThemedText>
+
+            {lookupLoading ? (
+              <ActivityIndicator color={color} />
+            ) : lookupResult ? (
+              <>
+                <ThemedText variant="body" color="labelSecondary" style={styles.italic}>
+                  {lookupResult.p}
+                </ThemedText>
+                <ThemedText variant="body">{lookupResult.m}</ThemedText>
+                {lookupResult.e ? (
+                  <ThemedText variant="body" color="labelSecondary" style={styles.italic}>
+                    “{lookupResult.e}”
+                  </ThemedText>
+                ) : null}
+                <Button
+                  title={isSaved(lookupResult.w) ? '✓ Saved to My Vocabulary' : '+ Save to My Vocabulary'}
+                  accent="vocab"
+                  disabled={isSaved(lookupResult.w)}
+                  onPress={() => saveWord(lookupResult)}
+                />
+              </>
+            ) : lookupFailed ? (
+              <ThemedText variant="body" color="labelSecondary">
+                No definition found for this word.
+              </ThemedText>
+            ) : null}
+
+            <Button title="Close" variant="secondary" accent={accent} onPress={closeLookup} />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </>
   );
 }
@@ -96,5 +180,22 @@ const styles = StyleSheet.create({
   },
   word: {
     borderRadius: radii.sm,
+  },
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.lg,
+  },
+  sheet: {
+    width: '100%',
+    maxWidth: 420,
+    borderRadius: radii.xl,
+    padding: spacing.lg,
+    gap: spacing.sm,
+  },
+  italic: {
+    fontStyle: 'italic',
   },
 });
