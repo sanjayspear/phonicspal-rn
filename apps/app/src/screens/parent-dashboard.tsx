@@ -1,24 +1,14 @@
-import { getNodeTitle, mockChildName, mockLearningPath } from '@phonicspal/core';
-import {
-  Avatar,
-  Button,
-  ProgressBar,
-  RewardBurst,
-  ThemedText,
-  colors,
-  radii,
-  spacing,
-  useScheme,
-} from '@phonicspal/ui';
+import { getNodeTitle } from '@phonicspal/core';
+import { Avatar, Button, ProgressBar, RewardBurst, ThemedText, colors, radii, spacing, useScheme } from '@phonicspal/ui';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { ChildIdentityForm } from '@/components/child-identity-form';
 import { DashboardShell } from '@/components/dashboard-shell';
 import { useActivity } from '@/hooks/use-activity';
+import { useChildIdentity } from '@/hooks/use-child-identity';
 import { useLearningPaths } from '@/hooks/use-learning-paths';
-
-const CHILD_STUDENT_ID = mockLearningPath.studentId;
 
 const STATUS_ICON: Record<string, string> = {
   submitted: '✅',
@@ -30,11 +20,33 @@ const STATUS_ICON: Record<string, string> = {
 
 export function ParentDashboard() {
   const scheme = useScheme();
-  const { getPath, submitNode } = useLearningPaths();
+  const { template, getPath, savePath, submitNode } = useLearningPaths();
   const { addEvent } = useActivity();
+  const { identity, saveIdentity } = useChildIdentity();
 
-  const path = getPath(CHILD_STUDENT_ID) ?? mockLearningPath;
-  const nodes = [...path.nodes].sort((a, b) => a.order - b.order);
+  const path = identity ? getPath(identity.studentId) : undefined;
+
+  // First time this family's identified themselves against a published
+  // template, there's no per-student progress record yet — clone the
+  // template's nodes into one (see use-learning-paths.tsx's header for why
+  // this lives separately from the template). Only runs once per
+  // identity/template pair; afterwards getPath finds the real record.
+  useEffect(() => {
+    if (!identity || !template || path) return;
+    savePath({
+      id: `lp-${identity.studentId}`,
+      classId: template.classId,
+      studentId: identity.studentId,
+      createdBy: 'broadcast',
+      nodes: template.nodes,
+      updatedAt: new Date().toISOString(),
+      studentName: identity.childName,
+      className: identity.className,
+      section: identity.section,
+    });
+  }, [identity, template, path, savePath]);
+
+  const nodes = path ? [...path.nodes].sort((a, b) => a.order - b.order) : [];
   const submittedCount = nodes.filter((n) => n.status === 'submitted').length;
   const progress = nodes.length ? submittedCount / nodes.length : 0;
   const nextIndex = nodes.findIndex((n) => n.status !== 'submitted');
@@ -51,30 +63,50 @@ export function ParentDashboard() {
   }, [submittedCount]);
 
   function continueNext() {
-    if (!nextNode) return;
+    if (!nextNode || !identity) return;
     if (nextNode.type === 'topic') {
       // Deep-link into the real topic screen in guided mode — it shows the
       // "for grown-ups" tip and a Submit button, and submits from there
       // (docs/DESIGN.md §4.3), instead of marking it done sight-unseen.
-      router.push(`/phonics/${nextNode.refId}?pathNodeId=${nextNode.id}&studentId=${CHILD_STUDENT_ID}`);
+      router.push(`/phonics/${nextNode.refId}?pathNodeId=${nextNode.id}&studentId=${identity.studentId}`);
       return;
     }
     // Assignment nodes are free-text instructions with no screen of their
     // own — submit in place once the parent's done them with the child.
-    submitNode(CHILD_STUDENT_ID, nextNode.id);
-    addEvent({ studentName: mockChildName, summary: `Submitted ${getNodeTitle(nextNode)}`, whenLabel: 'Just now' });
+    submitNode(identity.studentId, nextNode.id);
+    addEvent({
+      studentName: identity.childName,
+      studentId: identity.studentId,
+      className: identity.className,
+      section: identity.section,
+      summary: `Submitted ${getNodeTitle(nextNode)}`,
+      whenLabel: 'Just now',
+    });
+  }
+
+  if (!identity) {
+    return (
+      <DashboardShell gradientAccent="home" title="PhonicsPal">
+        <ChildIdentityForm onSubmit={saveIdentity} />
+      </DashboardShell>
+    );
   }
 
   return (
     <DashboardShell gradientAccent="home" title="PhonicsPal">
       <View style={[styles.card, { backgroundColor: colors[scheme].background }]}>
         <View style={styles.cardHeader}>
-          <Avatar name={mockChildName} accent="home" size={56} />
+          <Avatar name={identity.childName} accent="home" size={56} />
           <View style={styles.cardHeaderText}>
-            <ThemedText variant="subtitle">{mockChildName}'s Learning Path</ThemedText>
+            <ThemedText variant="subtitle">{identity.childName}'s Learning Path</ThemedText>
             <ThemedText variant="body" color="labelSecondary">
-              {nodes.filter((n) => n.status === 'submitted').length} of {nodes.length} done
+              {identity.className} · Section {identity.section} · ID {identity.studentId}
             </ThemedText>
+            {nodes.length ? (
+              <ThemedText variant="body" color="labelSecondary">
+                {submittedCount} of {nodes.length} done
+              </ThemedText>
+            ) : null}
           </View>
           <RewardBurst trigger={rewardTrigger}>
             <Text style={styles.rewardStar}>⭐</Text>
@@ -109,7 +141,7 @@ export function ParentDashboard() {
           </>
         ) : (
           <ThemedText variant="body" color="labelSecondary">
-            No path assigned yet — your teacher will add one soon.
+            No path assigned yet — your teacher hasn't published one.
           </ThemedText>
         )}
       </View>

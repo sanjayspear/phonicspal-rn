@@ -1,10 +1,4 @@
-import {
-  getNodeTitle,
-  mockRoster,
-  phonicsTopics,
-  type LearningPath,
-  type LearningPathNode,
-} from '@phonicspal/core';
+import { getNodeTitle, phonicsTopics, type LearningPathNode } from '@phonicspal/core';
 import {
   Button,
   TextField,
@@ -40,30 +34,21 @@ function newId() {
   return `n${Date.now()}${Math.floor(Math.random() * 1000)}`;
 }
 
-export interface BuildPathScreenProps {
-  // Set when reached by tapping one student's roster row — preloads their
-  // existing path (if any) and preselects just them under "Assign to"
-  // below, for a quick one-off edit. Omitted when reached from the
-  // dashboard's own "Build a Learning Path" button, which starts blank
-  // with every student selected — docs/DESIGN.md §4.2's "fan-out on
-  // assign" means a teacher building one path for the whole class doesn't
-  // have to repeat this screen once per child.
-  initialStudentId?: string;
-}
-
-export function BuildPathScreen({ initialStudentId }: BuildPathScreenProps) {
+// No student picked first — this builds and publishes the one broadcast
+// Learning Path for the class (docs/DESIGN.md's CR-3: "Eliminate the
+// requirement for teachers to select or assign homework to specific
+// student names upfront"). It reflects on every parent's dashboard the
+// moment they open it; each family's own progress is created the first
+// time they identify themselves there (see ChildIdentityForm).
+export function BuildPathScreen() {
   const scheme = useScheme();
-  const { getPath, savePaths } = useLearningPaths();
+  const { template, publishTemplate } = useLearningPaths();
 
-  const existing = initialStudentId ? getPath(initialStudentId) : undefined;
   const [nodes, setNodes] = useState<LearningPathNode[]>(
-    existing ? [...existing.nodes].sort((a, b) => a.order - b.order) : []
+    template ? [...template.nodes].sort((a, b) => a.order - b.order) : []
   );
   const [assignmentText, setAssignmentText] = useState('');
   const [saving, setSaving] = useState(false);
-  const [assignTo, setAssignTo] = useState<Set<string>>(
-    new Set(initialStudentId ? [initialStudentId] : mockRoster.map((s) => s.id))
-  );
 
   function move(index: number, dir: -1 | 1) {
     const target = index + dir;
@@ -92,31 +77,9 @@ export function BuildPathScreen({ initialStudentId }: BuildPathScreenProps) {
     setAssignmentText('');
   }
 
-  function toggleAssignee(studentId: string) {
-    setAssignTo((prev) => {
-      const next = new Set(prev);
-      if (next.has(studentId)) next.delete(studentId);
-      else next.add(studentId);
-      return next;
-    });
-  }
-
   async function publish() {
-    if (assignTo.size === 0) return;
     setSaving(true);
-    const now = new Date().toISOString();
-    const targets: LearningPath[] = Array.from(assignTo).map((studentId) => {
-      const current = getPath(studentId);
-      return {
-        id: current?.id ?? `lp-${studentId}`,
-        classId: current?.classId ?? 'c1',
-        studentId,
-        createdBy: current?.createdBy ?? 'teacher1',
-        nodes,
-        updatedAt: now,
-      };
-    });
-    await savePaths(targets);
+    await publishTemplate(nodes);
     setSaving(false);
     goBack();
   }
@@ -129,9 +92,11 @@ export function BuildPathScreen({ initialStudentId }: BuildPathScreenProps) {
       />
       <SafeAreaView style={styles.flex} edges={['top']}>
         <ScrollView contentContainerStyle={styles.content}>
-          <ScreenHeader
-            title={initialStudentId ? `Build ${mockRoster.find((s) => s.id === initialStudentId)?.name ?? ''}'s Path` : 'Build a Learning Path'}
-          />
+          <ScreenHeader title="Build a Learning Path" />
+          <ThemedText variant="body" color="labelSecondary">
+            Publishing sends this to every parent's dashboard — no student picked, no roster to
+            manage.
+          </ThemedText>
 
           <View style={styles.sectionHeader}>
             <ThemedText variant="subtitle">Steps</ThemedText>
@@ -198,44 +163,7 @@ export function BuildPathScreen({ initialStudentId }: BuildPathScreenProps) {
             <Button title="Add" accent="phonics" onPress={addAssignment} />
           </View>
 
-          <View style={styles.sectionHeader}>
-            <ThemedText variant="subtitle">Assign to</ThemedText>
-            <ThemedText variant="body" color="labelSecondary">
-              Publishing sends this same path to every student checked below — everyone's checked
-              by default, so you don't have to set this up one child at a time.
-            </ThemedText>
-          </View>
-          <View style={styles.chipRow}>
-            {mockRoster.map((student) => {
-              const checked = assignTo.has(student.id);
-              return (
-                <Pressable
-                  key={student.id}
-                  onPress={() => toggleAssignee(student.id)}
-                  style={[
-                    styles.chip,
-                    {
-                      borderColor: checked ? sectionColors.home : colors[scheme].border,
-                      backgroundColor: checked ? withAlpha(sectionColors.home, 0.1) : colors[scheme].background,
-                    },
-                  ]}
-                >
-                  <ThemedText variant="body" style={{ color: checked ? sectionColors.home : colors[scheme].label }}>
-                    {checked ? '✓ ' : ''}
-                    {student.name}
-                  </ThemedText>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <Button
-            title={assignTo.size > 1 ? `Publish to ${assignTo.size} students` : 'Publish path'}
-            accent="home"
-            onPress={publish}
-            loading={saving}
-            disabled={assignTo.size === 0}
-          />
+          <Button title="Publish path" accent="home" onPress={publish} loading={saving} disabled={nodes.length === 0} />
         </ScrollView>
       </SafeAreaView>
     </View>

@@ -224,17 +224,34 @@ export interface LearningPath {
   createdBy: string;
   nodes: LearningPathNode[];
   updatedAt: string;
+  // Set when this progress record was created from a parent's
+  // self-identification form rather than a pre-existing roster entry (the
+  // broadcast Learning Path model — see LearningPathTemplate) — this is
+  // the only place that name/class/section live, so the teacher's
+  // tracking view can show who without a separate roster lookup.
+  studentName?: string;
+  className?: string;
+  section?: string;
 }
 
-// A roster entry as the teacher dashboard shows it — a read-model, not the
-// full student record.
-export interface StudentSummary {
-  id: string;
-  name: string;
-  topicsCompleted: number;
-  topicsTotal: number;
-  stars: number;
-  lastActiveLabel: string;
+// The one path a teacher publishes per class — content only (which
+// topics/assignments, in order), with no student targeting. A parent
+// identifying their child (ChildIdentity) is what turns this into a
+// per-student LearningPath progress record (see use-learning-paths.tsx).
+export interface LearningPathTemplate {
+  classId: string;
+  nodes: LearningPathNode[];
+  updatedAt: string;
+}
+
+// What a parent fills in once, before starting or submitting any homework,
+// so the teacher's tracking view knows whose progress it's looking at —
+// there's no pre-existing roster the parent picks from, they self-report.
+export interface ChildIdentity {
+  childName: string;
+  studentId: string;
+  className: string;
+  section: string;
 }
 
 export interface ActivityEvent {
@@ -242,4 +259,9 @@ export interface ActivityEvent {
   studentName: string;
   summary: string;
   whenLabel: string;
+  // Present once activity starts coming from self-identified submissions
+  // (ChildIdentity) rather than the old static mock feed.
+  studentId?: string;
+  className?: string;
+  section?: string;
 }

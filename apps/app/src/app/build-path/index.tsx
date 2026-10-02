@@ -1,11 +1,9 @@
 import { BuildPathScreen } from '@/screens/build-path-screen';
 
-// Reached from the Teacher dashboard's "Build a Learning Path" button —
-// no student picked first. Starts blank with every roster student
-// selected under "Assign to", so publishing fans the same path out to the
-// whole class in one go (docs/DESIGN.md §4.2) instead of requiring the
-// teacher to repeat the per-student build-path/[studentId] screen once
-// per child.
+// Reached from the Teacher dashboard's "Build a Learning Path" button.
+// There's no per-student route anymore (build-path/[studentId] was
+// removed) — the broadcast model (docs/DESIGN.md's CR-3) means one path
+// published here reaches every parent, with no roster step in between.
 export default function BuildPathIndexScreen() {
   return <BuildPathScreen />;
 }

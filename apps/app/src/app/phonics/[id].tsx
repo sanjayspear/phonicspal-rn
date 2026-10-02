@@ -1,4 +1,4 @@
-import { getNodeTitle, getPhonicsTopic, mockChildName } from '@phonicspal/core';
+import { getNodeTitle, getPhonicsTopic } from '@phonicspal/core';
 import { expoSpeechEngine } from '@phonicspal/speech';
 import {
   Button,
@@ -25,6 +25,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenHeader } from '@/components/screen-header';
 import { WordLookupSheet } from '@/components/word-lookup-sheet';
 import { useActivity } from '@/hooks/use-activity';
+import { useChildIdentity } from '@/hooks/use-child-identity';
 import { useLearningPaths } from '@/hooks/use-learning-paths';
 import { useWordLookup } from '@/hooks/use-word-lookup';
 import { LetterMatchGame, ListenGame, SoundFocusExplorer } from '@/components/phonics-games';
@@ -43,6 +44,7 @@ export default function PhonicsTopicScreen() {
 
   const { getPath, submitNode } = useLearningPaths();
   const { addEvent } = useActivity();
+  const { identity } = useChildIdentity();
   const lookup = useWordLookup();
   // Set only when this screen was deep-linked from the parent dashboard's
   // "Continue" button (docs/DESIGN.md §4.3's "guided mode") — browsing
@@ -57,7 +59,14 @@ export default function PhonicsTopicScreen() {
     if (!guidedNode || !studentId) return;
     setSubmitting(true);
     await submitNode(studentId, guidedNode.id);
-    addEvent({ studentName: mockChildName, summary: `Submitted ${getNodeTitle(guidedNode)}`, whenLabel: 'Just now' });
+    addEvent({
+      studentName: identity?.childName ?? 'A student',
+      studentId: identity?.studentId ?? studentId,
+      className: identity?.className,
+      section: identity?.section,
+      summary: `Submitted ${getNodeTitle(guidedNode)}`,
+      whenLabel: 'Just now',
+    });
     setSubmitting(false);
     router.back();
   }
