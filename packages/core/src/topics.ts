@@ -8,6 +8,7 @@
 // intro/tip content but render a "coming soon" placeholder until a
 // matching view component exists — see types.ts's PhonicsTopic comment.
 import { digraphs, diphthongs, rControlled } from './curriculum';
+import { LETTER_SOUNDS } from './letterSounds';
 import type { PhonicsCard, PhonicsTopic, SoundFocusWord, TopicCategory } from './types';
 
 // Shared by the three 'sounds'-view topics (Initial/Final/Medial Sounds):
@@ -57,7 +58,9 @@ const CB: PhonicsCard[] = [
 
 const TRIG: PhonicsCard[] = [
   { symbol: 'tch', exampleWords: ['witch', 'watch', 'catch'], hint: 'tch says ch. It comes right after a short vowel.', sound: 'ch' },
-  { symbol: 'dge', exampleWords: ['bridge', 'badge', 'hedge'], hint: 'dge says j, right after a short vowel.', sound: 'juh' },
+  // dge says /dʒ/, the same target phoneme as the letter j — see
+  // letterSounds.ts's header for the IPA table this reuses.
+  { symbol: 'dge', exampleWords: ['bridge', 'badge', 'hedge'], hint: 'dge says j, right after a short vowel.', sound: LETTER_SOUNDS.j },
   { symbol: 'igh', exampleWords: ['night', 'light', 'high'], hint: 'Three letters make the long i sound.', sound: 'eye' },
   { symbol: 'air', exampleWords: ['chair', 'hair', 'fair'], hint: 'Three letters, one sound: air.' },
   { symbol: 'ear', exampleWords: ['ear', 'hear', 'beard'], hint: 'ear says ear: I hear with my ear.' },
@@ -70,11 +73,11 @@ export const phonicsTopics: PhonicsTopic[] = [
     intro: 'The five short vowel sounds: a in cat, e in bed, i in sit, o in hot, u in sun. Tap a card to see the sound and its words.',
     tip: 'Tap a card and say the sound with me!',
     cards: [
-      { symbol: 'a', exampleWords: ['apple', 'cat', 'map', 'bag'], tag: 'short', hint: 'Short a says /ă/.', sound: 'ah' },
-      { symbol: 'e', exampleWords: ['egg', 'bed', 'hen', 'red'], tag: 'short', hint: 'Short e says /ĕ/.', sound: 'eh' },
-      { symbol: 'i', exampleWords: ['igloo', 'sit', 'pin', 'fish'], tag: 'short', hint: 'Short i says /ĭ/.', sound: 'ih' },
-      { symbol: 'o', exampleWords: ['octopus', 'hot', 'dog', 'fox'], tag: 'short', hint: 'Short o says /ŏ/.', sound: 'aw' },
-      { symbol: 'u', exampleWords: ['umbrella', 'sun', 'cup', 'bus'], tag: 'short', hint: 'Short u says /ŭ/.', sound: 'uh' },
+      { symbol: 'a', exampleWords: ['apple', 'cat', 'map', 'bag'], tag: 'short', hint: 'Short a says /ă/.', sound: LETTER_SOUNDS.a },
+      { symbol: 'e', exampleWords: ['egg', 'bed', 'hen', 'red'], tag: 'short', hint: 'Short e says /ĕ/.', sound: LETTER_SOUNDS.e },
+      { symbol: 'i', exampleWords: ['igloo', 'sit', 'pin', 'fish'], tag: 'short', hint: 'Short i says /ĭ/.', sound: LETTER_SOUNDS.i },
+      { symbol: 'o', exampleWords: ['octopus', 'hot', 'dog', 'fox'], tag: 'short', hint: 'Short o says /ŏ/.', sound: LETTER_SOUNDS.o },
+      { symbol: 'u', exampleWords: ['umbrella', 'sun', 'cup', 'bus'], tag: 'short', hint: 'Short u says /ŭ/.', sound: LETTER_SOUNDS.u },
     ],
   },
   {
@@ -255,27 +258,27 @@ export const phonicsTopics: PhonicsTopic[] = [
     intro: 'Tap a card to see the sound and an example word.',
     tip: 'Every letter has its own sound. Let’s listen!',
     cards: [
-      { symbol: 'b', exampleWords: ['ball'], sound: 'buh' },
-      { symbol: 'c', exampleWords: ['cat'], hint: 'Hard c says k. Before e, i or y it usually says s, as in city.', sound: 'kuh' },
-      { symbol: 'd', exampleWords: ['dog'], sound: 'duh' },
-      { symbol: 'f', exampleWords: ['fish'], sound: 'fuh' },
-      { symbol: 'g', exampleWords: ['goat'], hint: 'Hard g as in goat. Before e, i or y it can say j, as in gem.', sound: 'guh' },
-      { symbol: 'h', exampleWords: ['hat'], sound: 'huh' },
-      { symbol: 'j', exampleWords: ['jam'], sound: 'juh' },
-      { symbol: 'k', exampleWords: ['kite'], sound: 'kuh' },
-      { symbol: 'l', exampleWords: ['lion'], sound: 'luh' },
-      { symbol: 'm', exampleWords: ['moon'], sound: 'muh' },
-      { symbol: 'n', exampleWords: ['nest'], sound: 'nuh' },
-      { symbol: 'p', exampleWords: ['pig'], sound: 'puh' },
-      { symbol: 'q', exampleWords: ['queen'], sound: 'kwuh' },
-      { symbol: 'r', exampleWords: ['rabbit'], sound: 'ruh' },
-      { symbol: 's', exampleWords: ['sun'], sound: 'suh' },
-      { symbol: 't', exampleWords: ['tent'], sound: 'tuh' },
-      { symbol: 'v', exampleWords: ['van'], sound: 'vuh' },
-      { symbol: 'w', exampleWords: ['web'], sound: 'wuh' },
-      { symbol: 'x', exampleWords: ['box'], hint: 'x says ks, as at the end of box.', sound: 'kuss' },
-      { symbol: 'y', exampleWords: ['yak'], sound: 'yuh' },
-      { symbol: 'z', exampleWords: ['zebra'], sound: 'zuh' },
+      { symbol: 'b', exampleWords: ['ball'], sound: LETTER_SOUNDS.b },
+      { symbol: 'c', exampleWords: ['cat'], hint: 'Hard c says k. Before e, i or y it usually says s, as in city.', sound: LETTER_SOUNDS.c },
+      { symbol: 'd', exampleWords: ['dog'], sound: LETTER_SOUNDS.d },
+      { symbol: 'f', exampleWords: ['fish'], sound: LETTER_SOUNDS.f },
+      { symbol: 'g', exampleWords: ['goat'], hint: 'Hard g as in goat. Before e, i or y it can say j, as in gem.', sound: LETTER_SOUNDS.g },
+      { symbol: 'h', exampleWords: ['hat'], sound: LETTER_SOUNDS.h },
+      { symbol: 'j', exampleWords: ['jam'], sound: LETTER_SOUNDS.j },
+      { symbol: 'k', exampleWords: ['kite'], sound: LETTER_SOUNDS.k },
+      { symbol: 'l', exampleWords: ['lion'], sound: LETTER_SOUNDS.l },
+      { symbol: 'm', exampleWords: ['moon'], sound: LETTER_SOUNDS.m },
+      { symbol: 'n', exampleWords: ['nest'], sound: LETTER_SOUNDS.n },
+      { symbol: 'p', exampleWords: ['pig'], sound: LETTER_SOUNDS.p },
+      { symbol: 'q', exampleWords: ['queen'], sound: LETTER_SOUNDS.q },
+      { symbol: 'r', exampleWords: ['rabbit'], sound: LETTER_SOUNDS.r },
+      { symbol: 's', exampleWords: ['sun'], sound: LETTER_SOUNDS.s },
+      { symbol: 't', exampleWords: ['tent'], sound: LETTER_SOUNDS.t },
+      { symbol: 'v', exampleWords: ['van'], sound: LETTER_SOUNDS.v },
+      { symbol: 'w', exampleWords: ['web'], sound: LETTER_SOUNDS.w },
+      { symbol: 'x', exampleWords: ['box'], hint: 'x says ks, as at the end of box.', sound: LETTER_SOUNDS.x },
+      { symbol: 'y', exampleWords: ['yak'], sound: LETTER_SOUNDS.y },
+      { symbol: 'z', exampleWords: ['zebra'], sound: LETTER_SOUNDS.z },
     ],
   },
   {
