@@ -11,7 +11,7 @@ import {
   withAlpha,
   type SectionId,
 } from '@phonicspal/ui';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useVocabulary } from '@/hooks/use-vocabulary';
@@ -78,13 +78,25 @@ export function ReadAloudCard({ text, accent }: ReadAloudCardProps) {
 
   const [playing, setPlaying] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  // Where the next "▶ Listen" press starts reading from — a text cursor,
+  // placeable by tapping any word. Moves to wherever playback was stopped
+  // too, so Stop doubles as Pause: the next Listen press picks up close to
+  // where you left off instead of restarting the page.
+  const [cursorIndex, setCursorIndex] = useState(0);
+  // expoSpeechEngine.say()'s promise also resolves when stop() cancels it
+  // (not just on natural completion) — this tells playFrom's continuation
+  // which one happened, so a manual Stop doesn't get its resume cursor
+  // immediately overwritten by the "reached the end" reset below.
+  const userStoppedRef = useRef(false);
 
   // Changing page (or loading a different book/story) stops whatever was
-  // playing rather than leaving it reading from a page no longer on screen.
+  // playing and resets the cursor — a cursor placed on a page no longer on
+  // screen isn't meaningful.
   useEffect(() => {
     expoSpeechEngine.stop();
     setPlaying(false);
     setActiveIndex(null);
+    setCursorIndex(0);
   }, [page, text]);
 
   useEffect(() => setPageIndex(0), [text]);
@@ -99,7 +111,12 @@ export function ReadAloudCard({ text, accent }: ReadAloudCardProps) {
 
   useEffect(() => () => expoSpeechEngine.stop(), []);
 
-  async function handleWordPress(rawWord: string) {
+  async function handleWordPress(rawWord: string, index: number) {
+    // Tapping a word always places the cursor there — whether or not the
+    // lookup below finds anything, "the next Listen press starts here" is
+    // still true, same as a tap-to-position-cursor on any text reader.
+    setCursorIndex(index);
+
     const clean = rawWord.replace(/[^a-zA-Z']/g, '');
     if (!clean) return;
 
@@ -119,24 +136,46 @@ export function ReadAloudCard({ text, accent }: ReadAloudCardProps) {
     setLookupFailed(false);
   }
 
-  async function play() {
+  async function playFrom(startIndex: number) {
+    const startToken = pageTokens[startIndex];
+    if (!startToken) return;
+
+    userStoppedRef.current = false;
+    expoSpeechEngine.stop();
+    const fromOffset = startToken.start - pageOffset;
+
     setPlaying(true);
-    setActiveIndex(null);
-    await expoSpeechEngine.say(pageText, {
+    setActiveIndex(startIndex);
+    await expoSpeechEngine.say(pageText.slice(fromOffset), {
       rate: 0.8,
       onBoundary: (e) => {
         const idx = pageTokens.findIndex(
-          (t) => e.charIndex >= t.start - pageOffset && e.charIndex < t.end - pageOffset
+          (t, i) =>
+            i >= startIndex &&
+            e.charIndex + fromOffset >= t.start - pageOffset &&
+            e.charIndex + fromOffset < t.end - pageOffset
         );
         if (idx !== -1) setActiveIndex(idx);
       },
     });
     setPlaying(false);
     setActiveIndex(null);
+    // Only clear the cursor on a natural finish — stop() already set it to
+    // the resume point for a manual Stop, and this runs after that (see
+    // userStoppedRef's comment above) so it must not stomp on it.
+    if (!userStoppedRef.current) setCursorIndex(0);
+  }
+
+  function play() {
+    return playFrom(cursorIndex);
   }
 
   function stop() {
+    userStoppedRef.current = true;
     expoSpeechEngine.stop();
+    // Stop doubles as Pause: leave the cursor where playback was reading
+    // from, so the next Listen press resumes close to here.
+    if (activeIndex !== null) setCursorIndex(activeIndex);
     setPlaying(false);
     setActiveIndex(null);
   }
@@ -151,19 +190,34 @@ export function ReadAloudCard({ text, accent }: ReadAloudCardProps) {
       <View style={[styles.card, { backgroundColor: colors[scheme].background }]}>
         <Text style={styles.text}>
           {pageTokens.map((t, i) => (
-            <Text
-              key={i}
-              onPress={() => handleWordPress(t.text)}
-              style={[
-                styles.word,
-                i === activeIndex && { backgroundColor: withAlpha(color, 0.25), color },
-              ]}
-            >
-              {t.text}{' '}
+            <Text key={i}>
+              {i === cursorIndex ? <Text style={[styles.caret, { color }]}>▎</Text> : null}
+              <Text
+                onPress={() => handleWordPress(t.text, i)}
+                style={[
+                  styles.word,
+                  i === activeIndex && { backgroundColor: withAlpha(color, 0.25), color },
+                ]}
+              >
+                {t.text}{' '}
+              </Text>
             </Text>
           ))}
         </Text>
       </View>
+
+      {!playing && cursorIndex > 0 ? (
+        <View style={styles.cursorRow}>
+          <ThemedText variant="body" color="labelSecondary">
+            ▶ Starts from “{pageTokens[cursorIndex]?.text}”
+          </ThemedText>
+          <Pressable onPress={() => setCursorIndex(0)}>
+            <ThemedText variant="body" style={[styles.linkText, { color }]}>
+              Start from the top
+            </ThemedText>
+          </Pressable>
+        </View>
+      ) : null}
 
       {playing ? (
         <Button title="⏹ Stop" variant="secondary" accent={accent} onPress={stop} />
@@ -228,6 +282,14 @@ export function ReadAloudCard({ text, accent }: ReadAloudCardProps) {
               </ThemedText>
             ) : null}
 
+            <Button
+              title="▶ Read from here"
+              accent={accent}
+              onPress={() => {
+                closeLookup();
+                play();
+              }}
+            />
             <Button title="Close" variant="secondary" accent={accent} onPress={closeLookup} />
           </Pressable>
         </Pressable>
@@ -247,6 +309,20 @@ const styles = StyleSheet.create({
   },
   word: {
     borderRadius: radii.sm,
+  },
+  caret: {
+    fontWeight: '700',
+  },
+  cursorRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  linkText: {
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
   pager: {
     flexDirection: 'row',
