@@ -1,3 +1,5 @@
+import { expoSpeechEngine } from '@phonicspal/speech';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from './ThemedText';
@@ -13,12 +15,19 @@ export interface PhonicsWordTileProps {
 
 // Renders one word of a v1 'words'-view topic (CVC Words, Blending, …):
 // starts segmented into its sounds (c · a · t), tap to blend them into the
-// whole word — the same segment-then-blend interaction v1's words view
-// uses, just without the audio (see packages/core/src/topics.ts header).
+// whole word, and say it aloud — the same segment-then-blend interaction
+// v1's words view uses, via the shared TTS engine (see
+// packages/core/src/topics.ts header for what that does/doesn't cover).
 export function PhonicsWordTile({ word, blended, onPress }: PhonicsWordTileProps) {
   const scheme = useScheme();
   const accent = sectionColors.phonics;
   const segments = word.split('-');
+
+  useEffect(() => {
+    if (!blended) return;
+    expoSpeechEngine.stop();
+    expoSpeechEngine.say(segments.join(''), { rate: 0.8 });
+  }, [blended, word]);
 
   return (
     <Pressable

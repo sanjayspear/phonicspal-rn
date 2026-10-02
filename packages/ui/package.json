@@ -5,7 +5,8 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "dependencies": {
-    "@phonicspal/core": "*"
+    "@phonicspal/core": "*",
+    "@phonicspal/speech": "*"
   },
   "peerDependencies": {
     "react": "*",

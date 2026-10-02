@@ -1,4 +1,6 @@
 import type { PhonicsCard } from '@phonicspal/core';
+import { expoSpeechEngine } from '@phonicspal/speech';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from './ThemedText';
@@ -12,11 +14,19 @@ export interface PhonicsCardTileProps {
 }
 
 // Renders one card of a v1 'cards'-view phonics topic (Short Vowels, Long
-// Vowels, Consonant Sounds, …) — tap to focus it and reveal its example
-// words/hint. No audio yet (see packages/core/src/topics.ts header).
+// Vowels, Consonant Sounds, …) — tap to focus it, reveal its example
+// words/hint, and hear it spoken via the shared TTS engine (the same
+// generic voice Read/Books use — no pre-rendered sound clips, see
+// packages/core/src/topics.ts header).
 export function PhonicsCardTile({ card, selected, onPress }: PhonicsCardTileProps) {
   const scheme = useScheme();
   const accent = sectionColors.phonics;
+
+  useEffect(() => {
+    if (!selected) return;
+    expoSpeechEngine.stop();
+    expoSpeechEngine.say([card.symbol, card.exampleWords[0]].filter(Boolean).join('. '), { rate: 0.8 });
+  }, [selected, card]);
 
   return (
     <Pressable

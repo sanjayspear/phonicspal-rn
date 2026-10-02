@@ -1,11 +1,14 @@
-import { mockActivity, mockRoster } from '@phonicspal/core';
+import { mockRoster } from '@phonicspal/core';
 import { Avatar, ProgressBar, ThemedText, colors, radii, spacing, useScheme } from '@phonicspal/ui';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { DashboardShell } from '@/components/dashboard-shell';
+import { useActivity } from '@/hooks/use-activity';
 
 export function TeacherDashboard() {
+  const { events } = useActivity();
+
   return (
     <DashboardShell gradientAccent="phonics" title="PhonicsPal">
       <View style={styles.sectionHeader}>
@@ -33,7 +36,7 @@ export function TeacherDashboard() {
       </View>
 
       <View style={styles.list}>
-        {mockActivity.map((event) => (
+        {events.map((event) => (
           <View key={event.id} style={styles.activityRow}>
             <ThemedText variant="body">
               <ThemedText variant="body" style={styles.bold}>

@@ -1,4 +1,5 @@
 import { getPhonicsTopic } from '@phonicspal/core';
+import { expoSpeechEngine } from '@phonicspal/speech';
 import {
   PhonicsCardTile,
   PhonicsGroupCard,
@@ -13,7 +14,7 @@ import {
 } from '@phonicspal/ui';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -25,6 +26,8 @@ export default function PhonicsTopicScreen() {
   const topic = getPhonicsTopic(id);
   const [selected, setSelected] = useState<string | null>(null);
   const [blended, setBlended] = useState<Set<string>>(new Set());
+
+  useEffect(() => () => expoSpeechEngine.stop(), []);
 
   if (!topic) {
     return (

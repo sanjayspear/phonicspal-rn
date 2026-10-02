@@ -3,6 +3,7 @@ import {
   Avatar,
   Button,
   ProgressBar,
+  RewardBurst,
   SectionCard,
   ThemedText,
   colors,
@@ -12,9 +13,11 @@ import {
   type SectionId,
 } from '@phonicspal/ui';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { DashboardShell } from '@/components/dashboard-shell';
+import { useActivity } from '@/hooks/use-activity';
 import { useLearningPaths } from '@/hooks/use-learning-paths';
 
 const CHILD_STUDENT_ID = mockLearningPath.studentId;
@@ -36,11 +39,26 @@ const STATUS_ICON: Record<string, string> = {
 
 export function ParentDashboard() {
   const scheme = useScheme();
-  const { getPath } = useLearningPaths();
+  const { getPath, savePath } = useLearningPaths();
+  const { addEvent } = useActivity();
+  const [rewardTrigger, setRewardTrigger] = useState(0);
+
   const path = getPath(CHILD_STUDENT_ID) ?? mockLearningPath;
   const nodes = [...path.nodes].sort((a, b) => a.order - b.order);
   const progress = nodes.length ? nodes.filter((n) => n.status === 'submitted').length / nodes.length : 0;
-  const nextNode = nodes.find((n) => n.status !== 'submitted');
+  const nextIndex = nodes.findIndex((n) => n.status !== 'submitted');
+  const nextNode = nextIndex === -1 ? undefined : nodes[nextIndex];
+
+  function submitNext() {
+    if (!nextNode) return;
+    const updated = nodes.map((n) => (n.id === nextNode.id ? { ...n, status: 'submitted' as const, submittedAt: new Date().toISOString() } : n));
+    const after = updated[nextIndex + 1];
+    if (after?.status === 'locked') updated[nextIndex + 1] = { ...after, status: 'available' };
+
+    savePath({ ...path, nodes: updated, updatedAt: new Date().toISOString() });
+    addEvent({ studentName: mockChildName, summary: `Submitted ${getNodeTitle(nextNode)}`, whenLabel: 'Just now' });
+    setRewardTrigger((r) => r + 1);
+  }
 
   return (
     <DashboardShell gradientAccent="home" title="PhonicsPal">
@@ -53,6 +71,9 @@ export function ParentDashboard() {
               {nodes.filter((n) => n.status === 'submitted').length} of {nodes.length} done
             </ThemedText>
           </View>
+          <RewardBurst trigger={rewardTrigger}>
+            <Text style={styles.rewardStar}>⭐</Text>
+          </RewardBurst>
         </View>
 
         {nodes.length ? (
@@ -74,7 +95,7 @@ export function ParentDashboard() {
             </View>
 
             {nextNode ? (
-              <Button title={`Continue: ${getNodeTitle(nextNode)}`} accent="home" onPress={() => {}} />
+              <Button title={`Continue: ${getNodeTitle(nextNode)}`} accent="home" onPress={submitNext} />
             ) : (
               <ThemedText variant="body" color="labelSecondary">
                 All caught up — great work! 🎉
@@ -127,6 +148,9 @@ const styles = StyleSheet.create({
   cardHeaderText: {
     flex: 1,
     gap: spacing.xs,
+  },
+  rewardStar: {
+    fontSize: 28,
   },
   nodeList: {
     gap: spacing.sm,
