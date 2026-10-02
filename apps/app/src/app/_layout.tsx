@@ -13,6 +13,8 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { ActivityProvider } from '@/hooks/use-activity';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { BooksProvider } from '@/hooks/use-books';
+import { ChildIdentityProvider } from '@/hooks/use-child-identity';
+import { CustomStoriesProvider } from '@/hooks/use-custom-stories';
 import { LearningPathsProvider } from '@/hooks/use-learning-paths';
 import { SettingsProvider } from '@/hooks/use-settings';
 import { VocabularyProvider } from '@/hooks/use-vocabulary';
@@ -54,15 +56,19 @@ export default function RootLayout() {
       <SettingsProvider>
         <AuthProvider>
           <LearningPathsProvider>
-            <VocabularyProvider>
-              <BooksProvider>
-                <ActivityProvider>
-                  <AuthGate ready={fontsLoaded}>
-                    <Stack screenOptions={{ headerShown: false }} />
-                  </AuthGate>
-                </ActivityProvider>
-              </BooksProvider>
-            </VocabularyProvider>
+            <ChildIdentityProvider>
+              <VocabularyProvider>
+                <BooksProvider>
+                  <CustomStoriesProvider>
+                    <ActivityProvider>
+                      <AuthGate ready={fontsLoaded}>
+                        <Stack screenOptions={{ headerShown: false }} />
+                      </AuthGate>
+                    </ActivityProvider>
+                  </CustomStoriesProvider>
+                </BooksProvider>
+              </VocabularyProvider>
+            </ChildIdentityProvider>
           </LearningPathsProvider>
         </AuthProvider>
       </SettingsProvider>
