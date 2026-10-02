@@ -33,6 +33,22 @@ function tokenize(text: string): Token[] {
   return tokens;
 }
 
+// Words per page: rendering an entire uploaded book as one ScrollView made
+// "listen to the whole thing" mean scrolling forever to find your place.
+// ~180 words is roughly a screen and a half at this card's font size —
+// long enough to feel like real reading, short enough that Play finishes
+// in well under a minute.
+const WORDS_PER_PAGE = 180;
+
+function paginate(tokens: Token[]): Token[][] {
+  if (tokens.length === 0) return [[]];
+  const pages: Token[][] = [];
+  for (let i = 0; i < tokens.length; i += WORDS_PER_PAGE) {
+    pages.push(tokens.slice(i, i + WORDS_PER_PAGE));
+  }
+  return pages;
+}
+
 export interface ReadAloudCardProps {
   text: string;
   accent: SectionId;
@@ -46,10 +62,32 @@ export function ReadAloudCard({ text, accent }: ReadAloudCardProps) {
   const scheme = useScheme();
   const color = sectionColors[accent];
   const tokens = useMemo(() => tokenize(text), [text]);
+  const pages = useMemo(() => paginate(tokens), [tokens]);
   const { isSaved, saveWord } = useVocabulary();
+
+  const [pageIndex, setPageIndex] = useState(0);
+  const page = Math.min(pageIndex, pages.length - 1);
+  const pageTokens = pages[page];
+  // Tokens carry offsets into the full `text`; re-base them to the start
+  // of this page's own substring so onBoundary's charIndex (relative to
+  // whatever string was actually spoken) lines up with pageTokens' indices.
+  const pageOffset = pageTokens[0]?.start ?? 0;
+  const pageText = pageTokens.length
+    ? text.slice(pageOffset, pageTokens[pageTokens.length - 1].end)
+    : '';
 
   const [playing, setPlaying] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  // Changing page (or loading a different book/story) stops whatever was
+  // playing rather than leaving it reading from a page no longer on screen.
+  useEffect(() => {
+    expoSpeechEngine.stop();
+    setPlaying(false);
+    setActiveIndex(null);
+  }, [page, text]);
+
+  useEffect(() => setPageIndex(0), [text]);
 
   // Word-lookup sheet state — tapping any word (whether or not TTS is
   // playing) looks it up without interrupting playback, so a child can tap
@@ -84,10 +122,12 @@ export function ReadAloudCard({ text, accent }: ReadAloudCardProps) {
   async function play() {
     setPlaying(true);
     setActiveIndex(null);
-    await expoSpeechEngine.say(text, {
+    await expoSpeechEngine.say(pageText, {
       rate: 0.8,
       onBoundary: (e) => {
-        const idx = tokens.findIndex((t) => e.charIndex >= t.start && e.charIndex < t.end);
+        const idx = pageTokens.findIndex(
+          (t) => e.charIndex >= t.start - pageOffset && e.charIndex < t.end - pageOffset
+        );
         if (idx !== -1) setActiveIndex(idx);
       },
     });
@@ -101,11 +141,16 @@ export function ReadAloudCard({ text, accent }: ReadAloudCardProps) {
     setActiveIndex(null);
   }
 
+  function goToPage(next: number) {
+    stop();
+    setPageIndex(Math.max(0, Math.min(pages.length - 1, next)));
+  }
+
   return (
     <>
       <View style={[styles.card, { backgroundColor: colors[scheme].background }]}>
         <Text style={styles.text}>
-          {tokens.map((t, i) => (
+          {pageTokens.map((t, i) => (
             <Text
               key={i}
               onPress={() => handleWordPress(t.text)}
@@ -125,6 +170,28 @@ export function ReadAloudCard({ text, accent }: ReadAloudCardProps) {
       ) : (
         <Button title="▶ Listen" accent={accent} onPress={play} />
       )}
+
+      {pages.length > 1 ? (
+        <View style={styles.pager}>
+          <Button
+            title="◀ Prev"
+            variant="secondary"
+            accent={accent}
+            disabled={page === 0}
+            onPress={() => goToPage(page - 1)}
+          />
+          <ThemedText variant="body" color="labelSecondary">
+            Page {page + 1} of {pages.length}
+          </ThemedText>
+          <Button
+            title="Next ▶"
+            variant="secondary"
+            accent={accent}
+            disabled={page === pages.length - 1}
+            onPress={() => goToPage(page + 1)}
+          />
+        </View>
+      ) : null}
 
       <Modal visible={lookupWordText !== null} transparent animationType="fade" onRequestClose={closeLookup}>
         <Pressable style={styles.backdrop} onPress={closeLookup}>
@@ -180,6 +247,12 @@ const styles = StyleSheet.create({
   },
   word: {
     borderRadius: radii.sm,
+  },
+  pager: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   backdrop: {
     flex: 1,
