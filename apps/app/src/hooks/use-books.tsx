@@ -8,8 +8,9 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 // original file — since AsyncStorage (not IndexedDB) is the storage here.
 // MAX_UPLOAD_SIZE gates the original file (extraction can be slow/memory-
 // heavy for a huge PDF); MAX_TEXT_LENGTH gates what actually gets stored.
-export const MAX_UPLOAD_SIZE = 15 * 1024 * 1024; // 15MB original file
-export const MAX_TEXT_LENGTH = 1_000_000; // ~1MB of extracted text
+// 35MB matches v1's IndexedDB cap (docs/DESIGN.md §0).
+export const MAX_UPLOAD_SIZE = 35 * 1024 * 1024; // 35MB original file
+export const MAX_TEXT_LENGTH = 2_500_000; // ~2.5MB of extracted text
 
 const STORAGE_KEY = 'phonicspal.books';
 

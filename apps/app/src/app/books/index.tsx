@@ -49,7 +49,7 @@ export default function BooksListScreen() {
       return;
     }
     if ((asset.size ?? 0) > MAX_UPLOAD_SIZE) {
-      setStatus('That file is bigger than 15MB. Please choose a smaller one.');
+      setStatus('That file is bigger than 35MB. Please choose a smaller one.');
       return;
     }
 
@@ -95,7 +95,7 @@ export default function BooksListScreen() {
         <ScrollView contentContainerStyle={styles.content}>
           <ScreenHeader title="Books" />
           <ThemedText variant="body" color="labelSecondary">
-            Upload a PDF, TXT or EPUB file (up to 15MB) to add it to your library.
+            Upload a PDF, TXT or EPUB file (up to 35MB) to add it to your library.
           </ThemedText>
 
           <Button title="＋ Upload a book" accent="books" onPress={upload} loading={uploading} />
