@@ -10,6 +10,21 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 const ACCOUNTS_KEY = 'phonicspal.accounts';
 const SESSION_KEY = 'phonicspal.session';
 
+// Temporary demo credentials (per the "any user should be able to log in
+// and try each role" request) — fixed emails that always resolve to a
+// given role on log in, so anyone can try the Teacher/Parent/Solo
+// experience without signing up first. logIn() never checks a password
+// (see below), so these work with any password, including a blank one.
+// Remove once real auth (and real per-user accounts) lands.
+export const DEMO_ACCOUNTS: { email: string; role: Role }[] = [
+  { email: 'teacher.demo@phonicspal.app', role: 'teacher' },
+  { email: 'parent.demo@phonicspal.app', role: 'parent' },
+  { email: 'solo.demo@phonicspal.app', role: 'solo' },
+];
+const DEMO_ROLE_BY_EMAIL: Record<string, Role> = Object.fromEntries(
+  DEMO_ACCOUNTS.map((a) => [a.email, a.role])
+);
+
 export interface Session {
   email: string;
   role: Role;
@@ -59,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     logIn: async (email) => {
       const accounts = await readAccounts();
-      const role = accounts[email] ?? 'solo';
+      const role = accounts[email] ?? DEMO_ROLE_BY_EMAIL[email] ?? 'solo';
       await setCurrentSession({ email, role });
     },
     logOut: () => setCurrentSession(null),

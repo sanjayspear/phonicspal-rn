@@ -16,7 +16,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useAuth } from '@/hooks/use-auth';
+import { DEMO_ACCOUNTS, useAuth } from '@/hooks/use-auth';
 
 const ROLES: { role: Role; title: string; description: string; icon: string }[] = [
   { role: 'teacher', title: 'Teacher', description: 'Assign and track a class', icon: '🧑‍🏫' },
@@ -24,14 +24,28 @@ const ROLES: { role: Role; title: string; description: string; icon: string }[] 
   { role: 'solo', title: 'Just me', description: 'Free play, no roster', icon: '🚀' },
 ];
 
+// Same role -> accent mapping RoleTile uses above, so a demo button reads
+// as "the same Teacher/Parent/Solo" rather than new colors.
+const DEMO_ACCENT: Record<Role, 'phonics' | 'home' | 'vocab'> = {
+  teacher: 'phonics',
+  parent: 'home',
+  solo: 'vocab',
+};
+const DEMO_LABEL: Record<Role, string> = {
+  teacher: 'Teacher',
+  parent: 'Parent',
+  solo: 'Just me',
+};
+
 export default function SignUpScreen() {
   const scheme = useScheme();
-  const { signUp } = useAuth();
+  const { signUp, logIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<Role | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [demoSubmitting, setDemoSubmitting] = useState<Role | null>(null);
 
   const canSubmit = /\S+@\S+\.\S+/.test(email) && password.length >= 6 && role !== null;
 
@@ -48,6 +62,13 @@ export default function SignUpScreen() {
     setSubmitting(true);
     await signUp(email, role);
     setSubmitting(false);
+    router.replace('/');
+  }
+
+  async function handleDemoLogin(demoEmail: string, demoRole: Role) {
+    setDemoSubmitting(demoRole);
+    await logIn(demoEmail);
+    setDemoSubmitting(null);
     router.replace('/');
   }
 
@@ -110,6 +131,27 @@ export default function SignUpScreen() {
               Already have an account? <ThemedText style={styles.linkText}>Log in</ThemedText>
             </ThemedText>
           </Link>
+
+          <View style={styles.demoSection}>
+            <ThemedText variant="label" color="labelSecondary">
+              TRY IT NOW — NO ACCOUNT NEEDED
+            </ThemedText>
+            <ThemedText variant="body" color="labelSecondary">
+              Jump straight into any role with a temporary demo account.
+            </ThemedText>
+            <View style={styles.demoRow}>
+              {DEMO_ACCOUNTS.map((account) => (
+                <Button
+                  key={account.role}
+                  title={DEMO_LABEL[account.role]}
+                  variant="secondary"
+                  accent={DEMO_ACCENT[account.role]}
+                  loading={demoSubmitting === account.role}
+                  onPress={() => handleDemoLogin(account.email, account.role)}
+                />
+              ))}
+            </View>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -149,5 +191,17 @@ const styles = StyleSheet.create({
   linkText: {
     fontWeight: '700',
     textDecorationLine: 'underline',
+  },
+  demoSection: {
+    marginTop: spacing.lg,
+    paddingTop: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.08)',
+    gap: spacing.sm,
+  },
+  demoRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
   },
 });
