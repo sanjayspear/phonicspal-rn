@@ -17,6 +17,14 @@ export interface PhonicsCard {
   exampleWords: string[];
   tag?: string;
   hint?: string;
+  // A TTS-safe phonetic respelling of `symbol`, read aloud instead of it
+  // when set. Needed because speech engines read an isolated single
+  // letter as its alphabet name (e.g. 'b' -> "bee") rather than the phonic
+  // sound a phonics card is actually teaching (e.g. "buh") — and a few
+  // multi-letter graphemes are taught as a different sound than their
+  // spelling implies (e.g. 'ck' says /k/, not "see-kay"). Falls back to
+  // `symbol` when unset, for graphemes plain TTS already says correctly.
+  sound?: string;
 }
 
 export interface PhonicsGroup {

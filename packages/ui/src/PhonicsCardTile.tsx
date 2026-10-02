@@ -25,7 +25,13 @@ export function PhonicsCardTile({ card, selected, onPress }: PhonicsCardTileProp
   useEffect(() => {
     if (!selected) return;
     expoSpeechEngine.stop();
-    expoSpeechEngine.say([card.symbol, card.exampleWords[0]].filter(Boolean).join('. '), { rate: 0.8 });
+    // Speak card.sound, not card.symbol: a plain TTS engine reads an
+    // isolated letter as its alphabet name ('b' -> "bee"), not the phonic
+    // sound this card teaches — see PhonicsCard['sound'] in types.ts.
+    expoSpeechEngine.say(
+      [card.sound ?? card.symbol, card.exampleWords[0]].filter(Boolean).join('. '),
+      { rate: 0.8 }
+    );
   }, [selected, card]);
 
   return (
