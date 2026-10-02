@@ -13,7 +13,7 @@ import {
   type SectionId,
 } from '@phonicspal/ui';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { DashboardShell } from '@/components/dashboard-shell';
@@ -39,25 +39,39 @@ const STATUS_ICON: Record<string, string> = {
 
 export function ParentDashboard() {
   const scheme = useScheme();
-  const { getPath, savePath } = useLearningPaths();
+  const { getPath, submitNode } = useLearningPaths();
   const { addEvent } = useActivity();
-  const [rewardTrigger, setRewardTrigger] = useState(0);
 
   const path = getPath(CHILD_STUDENT_ID) ?? mockLearningPath;
   const nodes = [...path.nodes].sort((a, b) => a.order - b.order);
-  const progress = nodes.length ? nodes.filter((n) => n.status === 'submitted').length / nodes.length : 0;
+  const submittedCount = nodes.filter((n) => n.status === 'submitted').length;
+  const progress = nodes.length ? submittedCount / nodes.length : 0;
   const nextIndex = nodes.findIndex((n) => n.status !== 'submitted');
   const nextNode = nextIndex === -1 ? undefined : nodes[nextIndex];
 
-  function submitNext() {
-    if (!nextNode) return;
-    const updated = nodes.map((n) => (n.id === nextNode.id ? { ...n, status: 'submitted' as const, submittedAt: new Date().toISOString() } : n));
-    const after = updated[nextIndex + 1];
-    if (after?.status === 'locked') updated[nextIndex + 1] = { ...after, status: 'available' };
+  // Fires on any increase in submitted count, not just the dashboard's own
+  // button — a topic node submitted from the guided phonics screen (see
+  // phonics/[id].tsx) lands here too once this screen re-renders.
+  const [rewardTrigger, setRewardTrigger] = useState(0);
+  const prevSubmittedCount = useRef(submittedCount);
+  useEffect(() => {
+    if (submittedCount > prevSubmittedCount.current) setRewardTrigger((r) => r + 1);
+    prevSubmittedCount.current = submittedCount;
+  }, [submittedCount]);
 
-    savePath({ ...path, nodes: updated, updatedAt: new Date().toISOString() });
+  function continueNext() {
+    if (!nextNode) return;
+    if (nextNode.type === 'topic') {
+      // Deep-link into the real topic screen in guided mode — it shows the
+      // "for grown-ups" tip and a Submit button, and submits from there
+      // (docs/DESIGN.md §4.3), instead of marking it done sight-unseen.
+      router.push(`/phonics/${nextNode.refId}?pathNodeId=${nextNode.id}&studentId=${CHILD_STUDENT_ID}`);
+      return;
+    }
+    // Assignment nodes are free-text instructions with no screen of their
+    // own — submit in place once the parent's done them with the child.
+    submitNode(CHILD_STUDENT_ID, nextNode.id);
     addEvent({ studentName: mockChildName, summary: `Submitted ${getNodeTitle(nextNode)}`, whenLabel: 'Just now' });
-    setRewardTrigger((r) => r + 1);
   }
 
   return (
@@ -95,7 +109,7 @@ export function ParentDashboard() {
             </View>
 
             {nextNode ? (
-              <Button title={`Continue: ${getNodeTitle(nextNode)}`} accent="home" onPress={submitNext} />
+              <Button title={`Continue: ${getNodeTitle(nextNode)}`} accent="home" onPress={continueNext} />
             ) : (
               <ThemedText variant="body" color="labelSecondary">
                 All caught up — great work! 🎉

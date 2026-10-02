@@ -1,6 +1,7 @@
-import { getPhonicsTopic } from '@phonicspal/core';
+import { getNodeTitle, getPhonicsTopic, mockChildName } from '@phonicspal/core';
 import { expoSpeechEngine } from '@phonicspal/speech';
 import {
+  Button,
   PhonicsCardTile,
   PhonicsGroupCard,
   PhonicsWordTile,
@@ -13,21 +14,46 @@ import {
   withAlpha,
 } from '@phonicspal/ui';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/components/screen-header';
+import { useActivity } from '@/hooks/use-activity';
+import { useLearningPaths } from '@/hooks/use-learning-paths';
 
 export default function PhonicsTopicScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, pathNodeId, studentId } = useLocalSearchParams<{
+    id: string;
+    pathNodeId?: string;
+    studentId?: string;
+  }>();
   const scheme = useScheme();
   const topic = getPhonicsTopic(id);
   const [selected, setSelected] = useState<string | null>(null);
   const [blended, setBlended] = useState<Set<string>>(new Set());
+  const [submitting, setSubmitting] = useState(false);
+
+  const { getPath, submitNode } = useLearningPaths();
+  const { addEvent } = useActivity();
+  // Set only when this screen was deep-linked from the parent dashboard's
+  // "Continue" button (docs/DESIGN.md §4.3's "guided mode") — browsing
+  // Phonics freely never passes these params, so the banner/Submit button
+  // below only shows up for an actual Learning Path task.
+  const guidedNode =
+    pathNodeId && studentId ? getPath(studentId)?.nodes.find((n) => n.id === pathNodeId) : undefined;
 
   useEffect(() => () => expoSpeechEngine.stop(), []);
+
+  async function handleSubmit() {
+    if (!guidedNode || !studentId) return;
+    setSubmitting(true);
+    await submitNode(studentId, guidedNode.id);
+    addEvent({ studentName: mockChildName, summary: `Submitted ${getNodeTitle(guidedNode)}`, whenLabel: 'Just now' });
+    setSubmitting(false);
+    router.back();
+  }
 
   if (!topic) {
     return (
@@ -104,6 +130,28 @@ export default function PhonicsTopicScreen() {
               above are the real content, same as v1.
             </ThemedText>
           )}
+
+          {guidedNode ? (
+            <View style={[styles.guidedBox, { backgroundColor: withAlpha(sectionColors.home, 0.1) }]}>
+              {guidedNode.status === 'submitted' ? (
+                <ThemedText variant="body" style={{ color: sectionColors.home }}>
+                  ✅ Already submitted — great work!
+                </ThemedText>
+              ) : (
+                <>
+                  <ThemedText variant="body" style={{ color: sectionColors.home }}>
+                    🏠 Today's Learning Path task — practice together, then mark it done.
+                  </ThemedText>
+                  <Button
+                    title="Mark this done"
+                    accent="home"
+                    onPress={handleSubmit}
+                    loading={submitting}
+                  />
+                </>
+              )}
+            </View>
+          ) : null}
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -123,6 +171,11 @@ const styles = StyleSheet.create({
   tipBox: {
     borderRadius: radii.lg,
     padding: spacing.md,
+  },
+  guidedBox: {
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    gap: spacing.sm,
   },
   grid: {
     flexDirection: 'row',

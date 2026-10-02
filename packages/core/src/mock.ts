@@ -23,6 +23,9 @@ export const mockActivity: ActivityEvent[] = [
 
 export const mockChildName = 'Mia';
 
+// refIds below are real packages/core/src/topics.ts ids (not placeholder
+// slugs) so a parent tapping "Continue" deep-links into a topic that
+// actually renders, instead of the "not ported yet" screen.
 export const mockLearningPath: LearningPath = {
   id: 'lp1',
   classId: 'c1',
@@ -30,31 +33,19 @@ export const mockLearningPath: LearningPath = {
   createdBy: 'teacher1',
   updatedAt: new Date().toISOString(),
   nodes: [
-    { id: 'n1', order: 0, type: 'topic', refId: 'blend-cvc', status: 'submitted' },
-    { id: 'n2', order: 1, type: 'topic', refId: 'sound-boxes-sh-ch', status: 'submitted' },
-    { id: 'n3', order: 2, type: 'topic', refId: 'short-vowels', status: 'in_progress' },
-    { id: 'n4', order: 3, type: 'assignment', refId: 'read-3-pages-aloud', status: 'locked' },
-    { id: 'n5', order: 4, type: 'topic', refId: 'word-families-at-an', status: 'locked' },
+    { id: 'n1', order: 0, type: 'topic', refId: 'cvc', status: 'submitted' },
+    { id: 'n2', order: 1, type: 'topic', refId: 'svblend', status: 'submitted' },
+    { id: 'n3', order: 2, type: 'topic', refId: 'short', status: 'in_progress' },
+    { id: 'n4', order: 3, type: 'assignment', refId: 'Read 3 pages aloud', status: 'locked' },
+    { id: 'n5', order: 4, type: 'topic', refId: 'rhyme', status: 'locked' },
   ],
 };
 
-// Display titles for the seed path's refIds above, which predate the real
-// ported topics (docs/DESIGN.md §5.3) — stands in for the content that
-// would exist once all 62 topics are migrated.
-export const mockNodeTitles: Record<string, string> = {
-  'blend-cvc': 'Blending CVC Words',
-  'sound-boxes-sh-ch': 'Sound Boxes: sh, ch',
-  'short-vowels': 'Short Vowels',
-  'read-3-pages-aloud': 'Read 3 pages aloud',
-  'word-families-at-an': 'Word Families: -at, -an',
-};
-
-// A node's display title: a real ported topic, one of the legacy seed
-// titles above (the seed path's assignment node uses a slug refId that
-// needs this lookup same as its topic nodes do), or — for a free-text
-// assignment node created via the builder — the text itself, since there
-// nothing else to look up.
+// A node's display title: a real ported topic's name for a 'topic' node, or
+// the instruction text itself for an 'assignment' node — same thing the
+// Learning Path builder (apps/app's build-path screen) stores as refId, so
+// there's nothing else to look up.
 export function getNodeTitle(node: Pick<LearningPathNode, 'refId' | 'type'>): string {
-  if (node.type === 'topic') return getPhonicsTopic(node.refId)?.name ?? mockNodeTitles[node.refId] ?? node.refId;
-  return mockNodeTitles[node.refId] ?? node.refId;
+  if (node.type === 'topic') return getPhonicsTopic(node.refId)?.name ?? node.refId;
+  return node.refId;
 }
