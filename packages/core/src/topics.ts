@@ -1,13 +1,26 @@
 // All 62 topics from v1's js/topics.js, organized under the same 8
 // browsing categories v1 uses (its GROUPS). Every topic's real id/name/
 // icon/intro/tip is ported — nothing invented. Topics using the 'cards',
-// 'groups' or 'words' view types also carry their full interactive data
-// and have a real renderer in apps/app's phonics screens; the other 19
-// view types (family, boxes, builder, stories, fluency, …) are cataloged
-// with real content but rendered as a "coming soon" placeholder until a
+// 'groups', 'words', 'family', 'sight', 'listen', 'clap', 'letters' or
+// 'sounds' view types carry their full interactive data and have a real
+// renderer in apps/app's phonics screens; the other ~13 view types
+// (boxes, builder, stories, fluency, …) are cataloged with real
+// intro/tip content but render a "coming soon" placeholder until a
 // matching view component exists — see types.ts's PhonicsTopic comment.
 import { digraphs, diphthongs, rControlled } from './curriculum';
-import type { PhonicsCard, PhonicsTopic, TopicCategory } from './types';
+import type { PhonicsCard, PhonicsTopic, SoundFocusWord, TopicCategory } from './types';
+
+// Shared by the three 'sounds'-view topics (Initial/Final/Medial Sounds):
+// the same CVC words as the 'cvc' topic's words view, pre-split so each
+// topic just has to say which segment it's asking about.
+const CVC_SEGMENTS = [
+  ['c', 'a', 't'], ['m', 'a', 'p'], ['h', 'a', 't'], ['p', 'i', 'g'],
+  ['d', 'o', 'g'], ['s', 'u', 'n'], ['b', 'e', 'd'], ['h', 'e', 'n'],
+  ['c', 'u', 'p'], ['p', 'e', 'n'], ['f', 'o', 'x'], ['b', 'u', 's'],
+];
+function soundsAt(focusIndex: number): SoundFocusWord[] {
+  return CVC_SEGMENTS.map((segments) => ({ segments, focusIndex }));
+}
 
 const VB: PhonicsCard[] = [
   { symbol: 'ai', exampleWords: ['rain'] },
@@ -74,6 +87,14 @@ export const phonicsTopics: PhonicsTopic[] = [
     id: 'families', name: 'Word Families', icon: '🏠', view: 'family',
     intro: 'Words in a family share an ending: cat, hat, bat. Change the first letter to make a new word.',
     tip: 'Pick a family, then change the first letter!',
+    families: [
+      { rime: 'at', onsets: [{ letter: 'c', word: 'cat' }, { letter: 'h', word: 'hat' }, { letter: 'b', word: 'bat' }, { letter: 'r', word: 'rat' }, { letter: 'm', word: 'mat' }, { letter: 's', word: 'sat' }] },
+      { rime: 'an', onsets: [{ letter: 'c', word: 'can' }, { letter: 'm', word: 'man' }, { letter: 'p', word: 'pan' }, { letter: 'v', word: 'van' }, { letter: 'f', word: 'fan' }, { letter: 'r', word: 'ran' }] },
+      { rime: 'ig', onsets: [{ letter: 'b', word: 'big' }, { letter: 'p', word: 'pig' }, { letter: 'd', word: 'dig' }, { letter: 'f', word: 'fig' }, { letter: 'w', word: 'wig' }] },
+      { rime: 'og', onsets: [{ letter: 'd', word: 'dog' }, { letter: 'l', word: 'log' }, { letter: 'j', word: 'jog' }, { letter: 'f', word: 'fog' }, { letter: 'h', word: 'hog' }] },
+      { rime: 'ug', onsets: [{ letter: 'b', word: 'bug' }, { letter: 'h', word: 'hug' }, { letter: 'r', word: 'rug' }, { letter: 'm', word: 'mug' }, { letter: 't', word: 'tug' }, { letter: 'j', word: 'jug' }] },
+      { rime: 'et', onsets: [{ letter: 'p', word: 'pet' }, { letter: 'j', word: 'jet' }, { letter: 'n', word: 'net' }, { letter: 'w', word: 'wet' }, { letter: 'v', word: 'vet' }, { letter: 'l', word: 'let' }] },
+    ],
   },
   {
     id: 'pairs', name: 'Minimal Pairs', icon: '👂', view: 'pairs',
@@ -123,6 +144,20 @@ export const phonicsTopics: PhonicsTopic[] = [
     id: 'listen', name: 'Listening for Sounds', icon: '🎧', view: 'listen',
     intro: 'Before letters, children learn to listen: which animal made that sound, and are two words the same or different?',
     tip: 'Close your eyes and listen!',
+    pairs: [
+      { a: 'cat', b: 'cat', same: true },
+      { a: 'pin', b: 'pen', same: false },
+      { a: 'dog', b: 'dog', same: true },
+      { a: 'bat', b: 'bad', same: false },
+      { a: 'sip', b: 'zip', same: false },
+      { a: 'sun', b: 'sun', same: true },
+      { a: 'cap', b: 'cab', same: false },
+      { a: 'big', b: 'dig', same: false },
+      { a: 'hop', b: 'hop', same: true },
+      { a: 'fan', b: 'van', same: false },
+      { a: 'hat', b: 'hat', same: true },
+      { a: 'bed', b: 'bad', same: false },
+    ],
   },
   {
     id: 'rhyme', name: 'Rhyming', icon: '🎵', view: 'groups',
@@ -158,6 +193,16 @@ export const phonicsTopics: PhonicsTopic[] = [
     id: 'syll', name: 'Syllables', icon: '👏', view: 'clap',
     intro: 'A syllable is a beat in a word. Clap once for each beat: rab-bit has two.',
     tip: 'Clap the beats: but-ter-fly!',
+    words: [
+      { word: 'rabbit', syllables: ['rab', 'bit'] },
+      { word: 'pencil', syllables: ['pen', 'cil'] },
+      { word: 'monkey', syllables: ['mon', 'key'] },
+      { word: 'candle', syllables: ['can', 'dle'] },
+      { word: 'tiger', syllables: ['ti', 'ger'] },
+      { word: 'apple', syllables: ['ap', 'ple'] },
+      { word: 'basket', syllables: ['bas', 'ket'] },
+      { word: 'window', syllables: ['win', 'dow'] },
+    ],
   },
   {
     id: 'onset', name: 'Onset and Rime', icon: '🧲', view: 'onset',
@@ -168,16 +213,19 @@ export const phonicsTopics: PhonicsTopic[] = [
     id: 'first', name: 'Initial Sounds', icon: '🥇', view: 'sounds',
     intro: 'Listen for the very first sound in a word: sun starts with sss.',
     tip: 'What sound does it start with?',
+    words: soundsAt(0),
   },
   {
     id: 'last', name: 'Final Sounds', icon: '🏁', view: 'sounds',
     intro: 'Listen for the very last sound in a word: cat ends with t.',
     tip: 'Listen to the end of the word!',
+    words: soundsAt(2),
   },
   {
     id: 'middle', name: 'Medial Sounds', icon: '🎯', view: 'sounds',
     intro: 'The middle sound of a three-sound word is usually a vowel: c-a-t has a in the middle.',
     tip: 'What is in the middle? c… a… t!',
+    words: soundsAt(1),
   },
   {
     id: 'oblend', name: 'Blending Phonemes', icon: '🎁', view: 'words',
@@ -348,11 +396,26 @@ export const phonicsTopics: PhonicsTopic[] = [
     id: 'initial', name: 'Initial Consonants', icon: '🔤', view: 'letters',
     intro: 'Match the first sound of a word to its letter: ball starts with b.',
     tip: 'Which letter does it start with?',
+    words: [
+      { word: 'ball', letter: 'b' }, { word: 'cat', letter: 'c' }, { word: 'dog', letter: 'd' },
+      { word: 'fish', letter: 'f' }, { word: 'goat', letter: 'g' }, { word: 'hat', letter: 'h' },
+      { word: 'jam', letter: 'j' }, { word: 'kite', letter: 'k' }, { word: 'lion', letter: 'l' },
+      { word: 'moon', letter: 'm' }, { word: 'nest', letter: 'n' }, { word: 'pig', letter: 'p' },
+      { word: 'queen', letter: 'q' }, { word: 'rabbit', letter: 'r' }, { word: 'sun', letter: 's' },
+      { word: 'tent', letter: 't' }, { word: 'van', letter: 'v' }, { word: 'web', letter: 'w' },
+      { word: 'yak', letter: 'y' }, { word: 'zebra', letter: 'z' },
+    ],
   },
   {
     id: 'final', name: 'Final Consonants', icon: '🔚', view: 'letters',
     intro: 'Match the last sound of a word to its letter: cat ends with t.',
     tip: 'Which letter is at the end?',
+    words: [
+      { word: 'cat', letter: 't' }, { word: 'dog', letter: 'g' }, { word: 'sun', letter: 'n' },
+      { word: 'map', letter: 'p' }, { word: 'bus', letter: 's' }, { word: 'web', letter: 'b' },
+      { word: 'red', letter: 'd' }, { word: 'fox', letter: 'x' }, { word: 'hill', letter: 'l' },
+      { word: 'drum', letter: 'm' },
+    ],
   },
   {
     id: 'silent', name: 'Silent Consonants', icon: '🤫', view: 'groups',
@@ -432,6 +495,16 @@ export const phonicsTopics: PhonicsTopic[] = [
     id: 'multi', name: 'Multisyllabic Words', icon: '🦋', view: 'clap',
     intro: 'Read long words one chunk at a time, then put the chunks together: pump… kin… pumpkin!',
     tip: 'Read one chunk at a time!',
+    words: [
+      { word: 'butterfly', syllables: ['but', 'ter', 'fly'] },
+      { word: 'elephant', syllables: ['el', 'e', 'phant'] },
+      { word: 'dinosaur', syllables: ['di', 'no', 'saur'] },
+      { word: 'computer', syllables: ['com', 'pu', 'ter'] },
+      { word: 'umbrella', syllables: ['um', 'brel', 'la'] },
+      { word: 'banana', syllables: ['ba', 'na', 'na'] },
+      { word: 'caterpillar', syllables: ['cat', 'er', 'pil', 'lar'] },
+      { word: 'watermelon', syllables: ['wa', 'ter', 'mel', 'on'] },
+    ],
   },
   {
     id: 'prefix', name: 'Prefixes', icon: '⬅️', view: 'builder',
@@ -457,6 +530,20 @@ export const phonicsTopics: PhonicsTopic[] = [
     id: 'sight', name: 'Irregular & High-Frequency Words', icon: '❤️', view: 'sight',
     intro: 'Words we read all the time. The highlighted part does not follow the usual rules, so we learn it "by heart".',
     tip: 'Learn the tricky part by heart!',
+    words: [
+      { word: 'said', trickyStart: 1, trickyEnd: 3 },
+      { word: 'was', trickyStart: 1, trickyEnd: 2 },
+      { word: 'of', trickyStart: 1, trickyEnd: 2 },
+      { word: 'to', trickyStart: 1, trickyEnd: 2 },
+      { word: 'you', trickyStart: 1, trickyEnd: 3 },
+      { word: 'they', trickyStart: 2, trickyEnd: 4 },
+      { word: 'were', trickyStart: 1, trickyEnd: 4 },
+      { word: 'one', trickyStart: 0, trickyEnd: 3 },
+      { word: 'two', trickyStart: 1, trickyEnd: 3 },
+      { word: 'could', trickyStart: 1, trickyEnd: 4 },
+      { word: 'laugh', trickyStart: 2, trickyEnd: 5 },
+      { word: 'friend', trickyStart: 2, trickyEnd: 4 },
+    ],
   },
   {
     id: 'advspell', name: 'Advanced Spelling Patterns', icon: '🎓', view: 'groups',

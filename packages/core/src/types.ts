@@ -38,6 +38,52 @@ export interface PhonicsGroup {
 // 'sh-i-p' — tap to blend the sounds into the whole word.
 export type PhonicsWordItem = string;
 
+// One rime ("-at") and the onset letters that build real words from it
+// ("c" + at -> cat) — a 'family'-view topic's interactive unit.
+export interface WordFamily {
+  rime: string;
+  onsets: { letter: string; word: string }[];
+}
+
+// A high-frequency/irregular word with the span (into `word`) that doesn't
+// follow regular phonics rules, highlighted separately in the UI — e.g.
+// 'said' with trickyStart 1, trickyEnd 3 highlights the "ai".
+export interface SightWordEntry {
+  word: string;
+  trickyStart: number;
+  trickyEnd: number;
+}
+
+// Two words for a same/different listening round.
+export interface SoundPair {
+  a: string;
+  b: string;
+  same: boolean;
+}
+
+// A word pre-split into the syllable chunks a 'clap'-view topic claps out.
+export interface ClapWord {
+  word: string;
+  syllables: string[];
+}
+
+// A word plus the single letter a 'letters'-view topic asks the child to
+// match (its first letter for an "Initial Consonants" topic, its last for
+// "Final Consonants" — the topic itself decides which end `letter` is).
+export interface LetterMatchWord {
+  word: string;
+  letter: string;
+}
+
+// A word already split into sound segments (reuses the same 'c-a-t' shape
+// words.ts's 'words' view uses), plus which segment a 'sounds'-view topic
+// is asking about — index 0 for Initial Sounds, the last index for Final
+// Sounds, 1 for Medial Sounds (all current source words are 3 segments).
+export interface SoundFocusWord {
+  segments: string[];
+  focusIndex: number;
+}
+
 export type PhonicsViewType =
   | 'cards'
   | 'groups'
@@ -85,12 +131,64 @@ export interface WordsTopic extends PhonicsTopicBase {
   words: PhonicsWordItem[];
 }
 
-// Catalogued but not yet interactive — see header comment.
-export interface PendingTopic extends PhonicsTopicBase {
-  view: Exclude<PhonicsViewType, 'cards' | 'groups' | 'words'>;
+export interface FamilyTopic extends PhonicsTopicBase {
+  view: 'family';
+  families: WordFamily[];
 }
 
-export type PhonicsTopic = CardsTopic | GroupsTopic | WordsTopic | PendingTopic;
+export interface SightTopic extends PhonicsTopicBase {
+  view: 'sight';
+  words: SightWordEntry[];
+}
+
+export interface ListenTopic extends PhonicsTopicBase {
+  view: 'listen';
+  pairs: SoundPair[];
+}
+
+export interface ClapTopic extends PhonicsTopicBase {
+  view: 'clap';
+  words: ClapWord[];
+}
+
+export interface LettersTopic extends PhonicsTopicBase {
+  view: 'letters';
+  words: LetterMatchWord[];
+}
+
+export interface SoundsTopic extends PhonicsTopicBase {
+  view: 'sounds';
+  words: SoundFocusWord[];
+}
+
+const INTERACTIVE_VIEWS = [
+  'cards',
+  'groups',
+  'words',
+  'family',
+  'sight',
+  'listen',
+  'clap',
+  'letters',
+  'sounds',
+] as const;
+
+// Catalogued but not yet interactive — see header comment.
+export interface PendingTopic extends PhonicsTopicBase {
+  view: Exclude<PhonicsViewType, (typeof INTERACTIVE_VIEWS)[number]>;
+}
+
+export type PhonicsTopic =
+  | CardsTopic
+  | GroupsTopic
+  | WordsTopic
+  | FamilyTopic
+  | SightTopic
+  | ListenTopic
+  | ClapTopic
+  | LettersTopic
+  | SoundsTopic
+  | PendingTopic;
 
 // The 8 browsing categories topics are organized under (v1's GROUPS) — a
 // topic can appear in more than one category, same as v1.

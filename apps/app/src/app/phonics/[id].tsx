@@ -3,7 +3,10 @@ import { expoSpeechEngine } from '@phonicspal/speech';
 import {
   Button,
   PhonicsCardTile,
+  PhonicsClapCard,
+  PhonicsFamilyCard,
   PhonicsGroupCard,
+  PhonicsSightCard,
   PhonicsWordTile,
   ThemedText,
   colors,
@@ -22,6 +25,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenHeader } from '@/components/screen-header';
 import { useActivity } from '@/hooks/use-activity';
 import { useLearningPaths } from '@/hooks/use-learning-paths';
+import { LetterMatchGame, ListenGame, SoundFocusExplorer } from '@/components/phonics-games';
 
 export default function PhonicsTopicScreen() {
   const { id, pathNodeId, studentId } = useLocalSearchParams<{
@@ -124,6 +128,30 @@ export default function PhonicsTopicScreen() {
                 />
               ))}
             </View>
+          ) : topic.view === 'family' ? (
+            <View style={styles.stack}>
+              {topic.families.map((family) => (
+                <PhonicsFamilyCard key={family.rime} family={family} />
+              ))}
+            </View>
+          ) : topic.view === 'sight' ? (
+            <View style={styles.grid}>
+              {topic.words.map((entry) => (
+                <PhonicsSightCard key={entry.word} entry={entry} />
+              ))}
+            </View>
+          ) : topic.view === 'clap' ? (
+            <View style={styles.grid}>
+              {topic.words.map((entry) => (
+                <PhonicsClapCard key={entry.word} entry={entry} />
+              ))}
+            </View>
+          ) : topic.view === 'listen' ? (
+            <ListenGame pairs={topic.pairs} />
+          ) : topic.view === 'letters' ? (
+            <LetterMatchGame words={topic.words} />
+          ) : topic.view === 'sounds' ? (
+            <SoundFocusExplorer words={topic.words} />
           ) : (
             <ThemedText variant="body" color="labelSecondary">
               The interactive practice for this topic isn{'’'}t built yet — the intro and tip
